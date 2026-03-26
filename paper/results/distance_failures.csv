@@ -1,0 +1,170 @@
+scenario,distance_m,seed_run,error
+composite,300,7,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/composite_300m_run7 --scenario=composite --speed=300 --distance=300 --numUes=10 --run=7 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+composite,500,7,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/composite_500m_run7 --scenario=composite --speed=300 --distance=500 --numUes=10 --run=7 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+composite,800,7,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/composite_800m_run7 --scenario=composite --speed=300 --distance=800 --numUes=10 --run=7 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+composite,800,9,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/composite_800m_run9 --scenario=composite --speed=300 --distance=800 --numUes=10 --run=9 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+composite,800,13,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/composite_800m_run13 --scenario=composite --speed=300 --distance=800 --numUes=10 --run=13 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+composite,1000,7,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/composite_1000m_run7 --scenario=composite --speed=300 --distance=1000 --numUes=10 --run=7 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+composite,1200,9,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/composite_1200m_run9 --scenario=composite --speed=300 --distance=1200 --numUes=10 --run=9 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+composite,1500,7,"pandey/hsr_work/ns-3-dev/src/core/model/default-simulator-impl.cc:133
+   4# ns3::DefaultSimulatorImpl::Run() at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/src/core/model/default-simulator-impl.cc:186
+   5# RunOnce(RunConfig) at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/scratch/hsr/hsr_runner.h:172
+   6# main at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/scratch/hsr_velocity_connect.cc:83
+   7# __libc_start_call_main at ../sysdeps/nptl/libc_start_call_main.h:58
+   8# __libc_start_main_impl at ../csu/libc-start.c:360
+   9# _start at :0
+  10# 
+
+terminate called without an active exception
+"
+composite,1500,8,"pandey/hsr_work/ns-3-dev/src/core/model/default-simulator-impl.cc:133
+   4# ns3::DefaultSimulatorImpl::Run() at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/src/core/model/default-simulator-impl.cc:186
+   5# RunOnce(RunConfig) at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/scratch/hsr/hsr_runner.h:172
+   6# main at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/scratch/hsr_velocity_connect.cc:83
+   7# __libc_start_call_main at ../sysdeps/nptl/libc_start_call_main.h:58
+   8# __libc_start_main_impl at ../csu/libc-start.c:360
+   9# _start at :0
+  10# 
+
+terminate called without an active exception
+"
+composite,1500,9,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/composite_1500m_run9 --scenario=composite --speed=300 --distance=1500 --numUes=10 --run=9 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+composite,1500,13,"pandey/hsr_work/ns-3-dev/src/core/model/default-simulator-impl.cc:133
+   4# ns3::DefaultSimulatorImpl::Run() at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/src/core/model/default-simulator-impl.cc:186
+   5# RunOnce(RunConfig) at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/scratch/hsr/hsr_runner.h:172
+   6# main at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/scratch/hsr_velocity_connect.cc:83
+   7# __libc_start_call_main at ../sysdeps/nptl/libc_start_call_main.h:58
+   8# __libc_start_main_impl at ../csu/libc-start.c:360
+   9# _start at :0
+  10# 
+
+terminate called without an active exception
+"
+composite,1500,15,"pandey/hsr_work/ns-3-dev/src/core/model/default-simulator-impl.cc:133
+   4# ns3::DefaultSimulatorImpl::Run() at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/src/core/model/default-simulator-impl.cc:186
+   5# RunOnce(RunConfig) at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/scratch/hsr/hsr_runner.h:172
+   6# main at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/scratch/hsr_velocity_connect.cc:83
+   7# __libc_start_call_main at ../sysdeps/nptl/libc_start_call_main.h:58
+   8# __libc_start_main_impl at ../csu/libc-start.c:360
+   9# _start at :0
+  10# 
+
+terminate called without an active exception
+"
+repeater,800,9,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/repeater_800m_run9 --scenario=repeater --speed=300 --distance=800 --numUes=10 --run=9 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+repeater,1000,7,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/repeater_1000m_run7 --scenario=repeater --speed=300 --distance=1000 --numUes=10 --run=7 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+repeater,1000,8,"pandey/hsr_work/ns-3-dev/src/core/model/default-simulator-impl.cc:133
+   4# ns3::DefaultSimulatorImpl::Run() at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/src/core/model/default-simulator-impl.cc:186
+   5# RunOnce(RunConfig) at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/scratch/hsr/hsr_runner.h:172
+   6# main at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/scratch/hsr_velocity_connect.cc:83
+   7# __libc_start_call_main at ../sysdeps/nptl/libc_start_call_main.h:58
+   8# __libc_start_main_impl at ../csu/libc-start.c:360
+   9# _start at :0
+  10# 
+
+terminate called without an active exception
+"
+repeater,1000,9,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/repeater_1000m_run9 --scenario=repeater --speed=300 --distance=1000 --numUes=10 --run=9 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+repeater,1000,13,"pandey/hsr_work/ns-3-dev/src/core/model/default-simulator-impl.cc:133
+   4# ns3::DefaultSimulatorImpl::Run() at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/src/core/model/default-simulator-impl.cc:186
+   5# RunOnce(RunConfig) at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/scratch/hsr/hsr_runner.h:172
+   6# main at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/scratch/hsr_velocity_connect.cc:83
+   7# __libc_start_call_main at ../sysdeps/nptl/libc_start_call_main.h:58
+   8# __libc_start_main_impl at ../csu/libc-start.c:360
+   9# _start at :0
+  10# 
+
+terminate called without an active exception
+"
+repeater,1000,15,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/repeater_1000m_run15 --scenario=repeater --speed=300 --distance=1000 --numUes=10 --run=15 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+repeater,1200,7,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/repeater_1200m_run7 --scenario=repeater --speed=300 --distance=1200 --numUes=10 --run=7 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+repeater,1200,9,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/repeater_1200m_run9 --scenario=repeater --speed=300 --distance=1200 --numUes=10 --run=9 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+repeater,1200,10,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/repeater_1200m_run10 --scenario=repeater --speed=300 --distance=1200 --numUes=10 --run=10 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+repeater,1200,13,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/repeater_1200m_run13 --scenario=repeater --speed=300 --distance=1200 --numUes=10 --run=13 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+repeater,1200,15,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/repeater_1200m_run15 --scenario=repeater --speed=300 --distance=1200 --numUes=10 --run=15 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+repeater,1200,16,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/repeater_1200m_run16 --scenario=repeater --speed=300 --distance=1200 --numUes=10 --run=16 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+repeater,1200,17,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/repeater_1200m_run17 --scenario=repeater --speed=300 --distance=1200 --numUes=10 --run=17 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+repeater,1500,7,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/repeater_1500m_run7 --scenario=repeater --speed=300 --distance=1500 --numUes=10 --run=7 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+repeater,1500,8,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/repeater_1500m_run8 --scenario=repeater --speed=300 --distance=1500 --numUes=10 --run=8 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+repeater,1500,9,"pandey/hsr_work/ns-3-dev/src/core/model/default-simulator-impl.cc:133
+   7# ns3::DefaultSimulatorImpl::Run() at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/src/core/model/default-simulator-impl.cc:186
+   8# RunOnce(RunConfig) at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/scratch/hsr/hsr_runner.h:172
+   9# main at /home/dr-chandrasen-pandey/hsr_work/ns-3-dev/scratch/hsr_velocity_connect.cc:83
+  10# __libc_start_call_main at ../sysdeps/nptl/libc_start_call_main.h:58
+  11# __libc_start_main_impl at ../csu/libc-start.c:360
+  12# _start at :0
+  13# 
+
+terminate called without an active exception
+"
+repeater,1500,13,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/repeater_1500m_run13 --scenario=repeater --speed=300 --distance=1500 --numUes=10 --run=13 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"
+repeater,1500,15,"[0/2] Re-checking globbed directories...
+ninja: no work to do.
+Command 'build/scratch/ns3.46-hsr_velocity_connect-default --outDir=results_distance_multiseed/raw/repeater_1500m_run15 --scenario=repeater --speed=300 --distance=1500 --numUes=10 --run=15 --shadowing=0 --nrScenario=UMi --nrCondition=LOS --nrChannelModel=ThreeGpp --scheduler=ns3::NrMacSchedulerOfdmaRR --appStart=0.5 --enableSrs=0 --saturatingLoad=0 --perUeOfferedMbps=8.19 --verbose=0' died with <Signals.SIGSEGV: 11>.
+"

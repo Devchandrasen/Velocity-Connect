@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# ns-3 build / run artifacts
+build/
+cmake-cache/
+results_*/
+*.o
+*.obj
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+
+# LaTeX temp files
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
