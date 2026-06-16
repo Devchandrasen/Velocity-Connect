@@ -53,9 +53,20 @@ Coach assumptions used in the paper:
 
 Velocity Connect effective-loss model:
 
+The effective length, denoted as \( L_{\mathrm{eff}} \), is calculated using the following formula:
+
 \[
-L_{\mathrm{eff}} = \max\left(0,\;L_{\mathrm{cable}} + L_{\mathrm{coupling}} + L_{\mathrm{indoor}} - (G_{\mathrm{donor}} + G_{\mathrm{service}})\right)
+L_{\mathrm{eff}} = \max\left(0,\; L_{\mathrm{cable}} + L_{\mathrm{coupling}} + L_{\mathrm{indoor}} - (G_{\mathrm{donor}} + G_{\mathrm{service}})\right)
 \]
+
+In this equation:
+- \( L_{\mathrm{cable}} \) represents the length of the cable,
+- \( L_{\mathrm{coupling}} \) refers to the length contributed by the coupling,
+- \( L_{\mathrm{indoor}} \) indicates the indoor length,
+- \( G_{\mathrm{donor}} \) is the gain from the donor,
+- \( G_{\mathrm{service}} \) is the gain from the service.
+
+The effective length is determined by taking the maximum of 0 and the result of the expression within the parentheses.
 
 Default component values:
 
