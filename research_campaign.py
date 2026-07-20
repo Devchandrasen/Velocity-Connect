@@ -35,6 +35,8 @@ REQUIRED_RESULT_FIELDS = {
     "seed",
     "run",
     "eff_loss_db",
+    "numerology",
+    "scs_khz",
     "throughput_mbps",
     "pdr",
     "tx_pkts",
@@ -49,6 +51,7 @@ REQUIRED_RESULT_FIELDS = {
 PROFILE_DEFAULTS: dict[str, dict[str, object]] = {
     "dev": {
         "num_ues": 1,
+        "numerology": 0,
         "sim_time": 2.0,
         "app_start": 0.2,
         "app_pkt_size": 1024,
@@ -59,6 +62,7 @@ PROFILE_DEFAULTS: dict[str, dict[str, object]] = {
     },
     "paper": {
         "num_ues": 10,
+        "numerology": 1,
         "sim_time": 2.0,
         "app_start": 0.2,
         "app_pkt_size": 1024,
@@ -102,6 +106,7 @@ def build_simulation_command(
     per_ue_offered_mbps: float = 8.19,
     saturating_interval_us: float = 100.0,
     paper_profile: bool = False,
+    numerology: int = 0,
 ) -> list[str]:
     """Build an argv-safe NS-3 wrapper command without invoking a shell."""
 
@@ -113,6 +118,7 @@ def build_simulation_command(
         f"--appPktSize={app_pkt_size} --saturatingLoad={int(saturating_load)} "
         f"--perUeOfferedMbps={per_ue_offered_mbps:g} "
         f"--saturatingIntervalUs={saturating_interval_us:g} "
+        f"--numerology={numerology} "
         f"--paperProfile={int(paper_profile)} "
         f"--outDir={out_dir.as_posix()}"
     )
@@ -125,6 +131,7 @@ def resolve_profile(args: argparse.Namespace) -> dict[str, object]:
     values = dict(PROFILE_DEFAULTS[args.profile])
     overrides = {
         "num_ues": args.num_ues,
+        "numerology": args.numerology,
         "sim_time": args.sim_time,
         "app_start": args.app_start,
         "app_pkt_size": args.app_pkt_size,
@@ -261,6 +268,8 @@ def run_campaign(args: argparse.Namespace) -> int:
         "seeds": seeds,
         "num_ues": profile["num_ues"],
         "num_ues_values": num_ues_values,
+        "numerology": profile["numerology"],
+        "subcarrier_spacing_khz": 15 * (2 ** int(profile["numerology"])),
         "profile": args.profile,
         "sim_time": profile["sim_time"],
         "app_start": profile["app_start"],
@@ -300,6 +309,7 @@ def run_campaign(args: argparse.Namespace) -> int:
             per_ue_offered_mbps=float(profile["per_ue_offered_mbps"]),
             saturating_interval_us=float(profile["saturating_interval_us"]),
             paper_profile=bool(profile["paper_profile"]),
+            numerology=int(profile["numerology"]),
         )
         print(f"[{index + 1}/{len(runs)}] {run_id}")
 
@@ -343,6 +353,27 @@ def run_campaign(args: argparse.Namespace) -> int:
                     raise ValueError(
                         f"Result scenario {result['scenario']!r} does not match {scenario!r}"
                     )
+                result_numerology_raw = float(result["numerology"])
+                if not result_numerology_raw.is_integer():
+                    raise ValueError(
+                        f"Result numerology {result_numerology_raw} is not an integer"
+                    )
+                result_numerology = int(result_numerology_raw)
+                expected_numerology = int(profile["numerology"])
+                if result_numerology != expected_numerology:
+                    raise ValueError(
+                        f"Result numerology {result_numerology} does not match "
+                        f"campaign numerology {expected_numerology}"
+                    )
+                result_scs_khz = float(result["scs_khz"])
+                expected_scs_khz = 15.0 * (2 ** expected_numerology)
+                if not math.isfinite(result_scs_khz) or not math.isclose(
+                    result_scs_khz, expected_scs_khz, rel_tol=0.0, abs_tol=1e-9
+                ):
+                    raise ValueError(
+                        f"Result SCS {result_scs_khz:g} kHz does not match "
+                        f"campaign SCS {expected_scs_khz:g} kHz"
+                    )
                 result.update(
                     {
                         "run_id": run_id,
@@ -364,6 +395,7 @@ def run_campaign(args: argparse.Namespace) -> int:
     ledger_fields = [
         "run_id", "status", "return_code", "scenario", "speed_kmph", "distance_m",
         "num_ues", "seed", "run", "raw_dir", "error", "eff_loss_db",
+        "numerology", "scs_khz",
         "throughput_mbps", "pdr", "tx_pkts", "rx_pkts", "mean_lat_ms", "p50_lat_ms",
         "p95_lat_ms", "jain_fairness",
     ]
@@ -394,6 +426,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seeds", default="1,2,3")
     parser.add_argument("--num-ues", type=int, default=None)
     parser.add_argument("--num-ues-list", default="", help="Optional comma-separated UE counts")
+    parser.add_argument("--numerology", type=int, default=None)
     parser.add_argument("--sim-time", type=float, default=None)
     parser.add_argument("--app-start", type=float, default=None)
     parser.add_argument("--app-pkt-size", type=int, default=None)
@@ -413,6 +446,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.num_ues is not None and args.num_ues < 1:
         parser.error("--num-ues must be at least 1")
+    if args.numerology is not None and not 0 <= args.numerology <= 5:
+        parser.error("--numerology must be between 0 and 5")
     if args.max_runs < 0:
         parser.error("--max-runs cannot be negative")
     try:

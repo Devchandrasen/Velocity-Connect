@@ -20,6 +20,8 @@ from research_campaign import run_campaign
 
 
 EXPECTED_SCENARIOS = {"metal", "composite", "repeater"}
+EXPECTED_NUMEROLOGY = 1
+EXPECTED_SCS_KHZ = 30.0
 ALWAYS_FINITE_FIELDS = ("throughput_mbps", "pdr")
 LATENCY_FIELDS = ("mean_lat_ms", "p95_lat_ms")
 UPSTREAM_FIX_REVISIONS = (
@@ -51,7 +53,25 @@ def validate_checkpoint(ledger_path: Path) -> dict[str, dict[str, float | None]]
             error = row.get("error", "").strip()
             raise ValueError(f"{scenario} checkpoint failed: {error or 'unknown simulator error'}")
 
+        try:
+            numerology_raw = float(row["numerology"])
+            scs_khz = float(row["scs_khz"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError(f"{scenario} has invalid numerology provenance") from exc
+        if not numerology_raw.is_integer():
+            raise ValueError(f"{scenario} has non-integer numerology {numerology_raw}")
+        numerology = int(numerology_raw)
+        if numerology != EXPECTED_NUMEROLOGY or not math.isclose(
+            scs_khz, EXPECTED_SCS_KHZ, rel_tol=0.0, abs_tol=1e-9
+        ):
+            raise ValueError(
+                f"{scenario} used numerology {numerology} / {scs_khz:g} kHz; "
+                f"expected {EXPECTED_NUMEROLOGY} / {EXPECTED_SCS_KHZ:g} kHz"
+            )
+
         metrics: dict[str, float | None] = {}
+        metrics["numerology"] = float(numerology)
+        metrics["scs_khz"] = scs_khz
         for field in ALWAYS_FINITE_FIELDS:
             try:
                 value = float(row[field])
@@ -136,6 +156,8 @@ def main(argv: list[str] | None = None) -> int:
             "distance_m": 500,
             "num_ues": 10,
             "seed": 7,
+            "numerology": EXPECTED_NUMEROLOGY,
+            "subcarrier_spacing_khz": EXPECTED_SCS_KHZ,
             "scenarios": sorted(EXPECTED_SCENARIOS),
         },
         "dependency_fix": {

@@ -21,6 +21,7 @@ Paper audit completed on 2026-07-20:
 - A first live 10-UE check completed for the repeater case but triggered NS-3 scheduler assertions for the low-SINR metal/composite cases. Those failures were retained as diagnostic evidence and were not used as paper results.
 - Root causes were isolated to two HARQ scheduler defects fixed upstream after v4.1.1: beam-order heap overflow (`81892efa`) and issue #278's double-debited `uint8_t` symbol budget (`a1aa32c7`). The repository carries revision-guarded production-code backports for the required v4.1.1 dependency.
 - After both backports, the exact 500 km/h, 500 m, 10-UE, seed-7 checkpoint completed 3/3 scenarios and the packaged `nr-test-sched-harq` suite passed. These are stability results, not multi-seed paper evidence.
+- The paper profile now explicitly configures numerology 1 (30 kHz SCS), persists it in raw CSV/config/manifest provenance, and rejects mismatched results. The parity checkpoint completed 3/3 scenarios and `nr-test-numerology-delay` passed.
 
 ## Phase 1 — build and experiment hygiene
 
@@ -30,7 +31,10 @@ Paper audit completed on 2026-07-20:
 4. Add a CI smoke gate: compile the target, run one repeater and one metal case, validate the CSV schema, and fail on missing/non-finite required fields.
 5. Require `verify_paper_checkpoint.py` to pass metal, composite, and repeater before starting a full paper campaign.
 
-Acceptance gate: a pinned environment can sync/build and complete the three-run checkpoint in under five minutes on the validated WSL host; all raw rows retain seed, run, scenario, and configuration provenance.
+Acceptance gate: a pinned environment can sync/build and complete the three-run
+checkpoint in under five minutes on the validated WSL host; all raw rows retain
+seed, run, scenario, numerology, SCS, and configuration provenance. This gate
+is now met locally.
 
 ## Phase 2 — real mobility and handover model
 
@@ -64,4 +68,9 @@ Acceptance gate: the model passes component-level conservation checks, never pro
 
 ## Recommended next implementation
 
-Correct the paper profile's 30 kHz SCS/numerology parity item and rerun the stability gate first. Then implement Phase 2 as the first substantive research advancement: real multi-cell mobility and handover interruption metrics are the clearest gap between the current framework and an advanced HSR connectivity study. The impact path is: reproducible parity -> field-calibrated passive link budget -> multi-cell handover robustness -> mixed passenger traffic and uplink -> coach-level pilot validation.
+Implement Phase 2 as the next substantive research advancement: real multi-cell
+mobility and handover interruption metrics are the clearest gap between the
+current framework and an advanced HSR connectivity study. The impact path is:
+reproducible parity -> field-calibrated passive link budget -> multi-cell
+handover robustness -> mixed passenger traffic and uplink -> coach-level pilot
+validation.

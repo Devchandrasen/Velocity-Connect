@@ -51,6 +51,7 @@ struct RunConfig
   // NR
   double carrierHz{3.5e9};
   double bandwidthHz{100e6};
+  uint16_t numerology{0};
   double gnbTxPowerDbm{40.0};
   double ueNoiseFigureDb{7.0};
 
@@ -120,6 +121,11 @@ inline double ComputeEffectivePenetrationLossDb(const RunConfig& cfg)
   return std::max(0.0, leff);
 }
 
+inline double ComputeSubcarrierSpacingKHz(uint16_t numerology)
+{
+  return 15.0 * static_cast<double>(1u << numerology);
+}
+
 // Apply the submitted-paper baseline before command-line overrides are parsed.
 // This keeps the paper profile explicit while allowing every value to remain
 // independently configurable from the command line.
@@ -127,6 +133,7 @@ inline void ApplyPaperProfile(RunConfig& cfg)
 {
   cfg.carrierHz = 3.5e9;
   cfg.bandwidthHz = 100e6;
+  cfg.numerology = 1;
   cfg.gnbTxPowerDbm = 40.0;
   cfg.ueNoiseFigureDb = 7.0;
   cfg.nrScenario = "UMi";

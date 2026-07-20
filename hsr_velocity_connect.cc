@@ -57,6 +57,7 @@ int main(int argc, char* argv[])
   cmd.AddValue("nrChannelModel", "NR channel model (ThreeGpp/TwoRay/NYU)", cfg.nrChannelModel);
   cmd.AddValue("shadowing", "Enable shadowing (0/1)", cfg.shadowingEnabled);
   cmd.AddValue("scheduler", "Scheduler TypeId string", cfg.schedulerType);
+  cmd.AddValue("numerology", "NR numerology (0-5; 1 means 30 kHz SCS)", cfg.numerology);
 
   // ✅ Scalability crash fix: SRS disabled by default for DL-focused study
   cmd.AddValue("enableSrs", "Enable SRS scheduling (0/1). Default 0.", cfg.enableSrs);
@@ -88,6 +89,13 @@ int main(int argc, char* argv[])
   cmd.AddValue("paperProfile", "Apply the submitted-paper baseline profile", paperProfile);
 
   cmd.Parse(argc, argv);
+
+  if (cfg.numerology > 5)
+  {
+    std::cerr << "Invalid numerology " << cfg.numerology
+              << ". Expected a value from 0 to 5." << std::endl;
+    return 2;
+  }
 
   EnsureDir(cfg.outDir);
 

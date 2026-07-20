@@ -3,7 +3,42 @@
 This ledger records completed terminal checks. A stability checkpoint is not a
 multi-seed paper result and must not be presented as one.
 
-## 2026-07-20 — paper-profile scheduler stability gate
+## 2026-07-20 — paper-profile numerology parity gate
+
+The paper profile now sets 5G-LENA numerology 1 explicitly and records both the
+numerology and derived 30 kHz subcarrier spacing in every simulator result.
+
+```bash
+python3 verify_paper_checkpoint.py \
+  --ns3 /home/codex/velocity-connect-ns3/ns3 \
+  --workdir /home/codex/velocity-connect-ns3 \
+  --out out/paper-checkpoint-num1
+```
+
+Configuration shared by all three runs: 500 km/h, 500 m, 10 UEs, seed 7,
+2 s simulation, 1024-byte UDP packets, 8.19 Mbps offered load per UE,
+numerology 1, and 30 kHz SCS.
+
+| Scenario | Status | Throughput (Mbps) | PDR | Mean latency (ms) | P95 latency (ms) |
+|---|---:|---:|---:|---:|---:|
+| metal | completed | 0.000000 | 0.000000 | unavailable | unavailable |
+| composite | completed | 80.699129 | 0.997332 | 3.429259 | 5.484005 |
+| repeater | completed | 80.784587 | 0.998388 | 2.817360 | 3.045493 |
+
+The checkpoint validator passed only after reading numerology 1 and 30 kHz SCS
+from all three raw result rows. The metal run again received no packets, so its
+latency is undefined rather than zero. This closes the configuration-parity
+item, but it remains a single-seed execution gate rather than publication-level
+evidence. The full multi-seed campaign has not yet been run.
+
+Dependency regression:
+
+```text
+PASS: TestSuite nr-test-numerology-delay
+1 of 1 tests passed (1 passed, 0 skipped, 0 failed, 0 crashed)
+```
+
+## 2026-07-20 — scheduler stability gate (diagnostic numerology 0)
 
 Environment:
 
@@ -41,9 +76,6 @@ UDP packets, and 8.19 Mbps offered load per UE.
 
 The metal run received no packets, so latency is undefined rather than zero.
 The result is evidence that the scheduler path is stable, not evidence that the
-metal link provides service. The single-seed checkpoint validates execution
-only; publication claims still require the declared multi-seed campaign.
-
-Open parity item: the current live trace reports NR numerology 0, while the
-submitted paper contract specifies 30 kHz SCS (numerology 1). Correct and
-revalidate that configuration before running the full paper campaign.
+metal link provides service. This older run used 5G-LENA's default numerology 0
+and is retained as diagnostic history; it is superseded by the numerology-1
+parity gate above for paper-profile execution evidence.

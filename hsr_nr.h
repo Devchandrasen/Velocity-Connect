@@ -11,6 +11,8 @@ using namespace ns3;
 
 inline void ConfigureNrHelper(Ptr<NrHelper> nrHelper, const RunConfig& cfg)
 {
+  nrHelper->SetGnbPhyAttribute("Numerology", UintegerValue(cfg.numerology));
+
   // Scheduler TypeId (fail-safe)
   TypeId schedTid;
   bool ok = TypeId::LookupByNameFailSafe(cfg.schedulerType, &schedTid);

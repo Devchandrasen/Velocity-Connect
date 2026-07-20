@@ -84,9 +84,11 @@ The summary intentionally ignores non-finite latency values when a run receives 
 - distance: 100-1500 m at 300 km/h, 10 UEs
 - scalability: 10/20/30/40/50 UEs at 300 km/h and 500 m
 
-The profile uses 3.5 GHz, 100 MHz, UMi LOS, shadowing disabled, 2 s simulation,
-1024-byte UDP packets, 1 ms inter-packet spacing (8.19 Mbps/UE), and the
-metal/composite/repeater loss cases from the paper.
+The profile uses 3.5 GHz, 100 MHz, numerology 1 (30 kHz SCS), UMi LOS,
+shadowing disabled, 2 s simulation, 1024-byte UDP packets, 1 ms inter-packet
+spacing (8.19 Mbps/UE), and the metal/composite/repeater loss cases from the
+paper. Numerology is applied explicitly to the gNB PHY; 5G-LENA propagates it
+to attached UEs. Every raw result row records both `numerology` and `scs_khz`.
 
 ```bash
 python3 /mnt/c/Users/devel/OneDrive/Documents/Velocity-Connect/run_paper_campaign.py \
@@ -117,7 +119,7 @@ python3 /mnt/c/Users/devel/OneDrive/Documents/Velocity-Connect/verify_paper_chec
 ```
 
 This runs metal, composite, and repeater with 10 UEs at 500 km/h and 500 m,
-then rejects failed or internally inconsistent results and writes
+then rejects failed, internally inconsistent, or non-30-kHz results and writes
 `paper_checkpoint_report.json`.
 
 Completed checkpoints and their claim limits are recorded in `RESULTS.md`.
@@ -156,7 +158,10 @@ For the repeater case, the effective loss is computed as:
 max(0, coupling + feeder + indoor - donor_gain - service_gain)
 ```
 
-All of these terms are exposed as ns-3 command-line parameters. The single-run endpoint also accepts `--nrScenario`, `--nrCondition`, `--nrChannelModel`, `--shadowing`, `--scheduler`, `--gnbTxPowerDbm`, `--ueNoiseFigureDb`, and traffic controls.
+All of these terms are exposed as ns-3 command-line parameters. The single-run
+endpoint also accepts `--numerology`, `--nrScenario`, `--nrCondition`,
+`--nrChannelModel`, `--shadowing`, `--scheduler`, `--gnbTxPowerDbm`,
+`--ueNoiseFigureDb`, and traffic controls.
 
 ## Tests
 

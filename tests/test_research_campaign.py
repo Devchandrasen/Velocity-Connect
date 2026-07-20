@@ -35,12 +35,14 @@ class CampaignHelpersTest(unittest.TestCase):
         self.assertIn("--scenario=repeater", command[2])
         self.assertIn("--seed=7", command[2])
         self.assertIn("--numUes=2", command[2])
+        self.assertIn("--numerology=0", command[2])
         self.assertIn("--saturatingLoad=1", command[2])
 
     def test_paper_profile_matches_submitted_workload(self):
         args = build_parser().parse_args(["--profile", "paper"])
         profile = resolve_profile(args)
         self.assertEqual(profile["num_ues"], 10)
+        self.assertEqual(profile["numerology"], 1)
         self.assertEqual(profile["app_pkt_size"], 1024)
         self.assertFalse(profile["saturating_load"])
         self.assertAlmostEqual(profile["per_ue_offered_mbps"], 8.19)
@@ -50,10 +52,11 @@ class CampaignHelpersTest(unittest.TestCase):
             "./ns3", "hsr_velocity_connect", "repeater", 300.0, 1500.0, 10, 3, 9,
             Path("out/raw/paper"), sim_time=2.0, app_start=0.2,
             app_pkt_size=1024, saturating_load=False,
-            per_ue_offered_mbps=8.19, paper_profile=True,
+            per_ue_offered_mbps=8.19, paper_profile=True, numerology=1,
         )
         self.assertIn("--appPktSize=1024", command[2])
         self.assertIn("--saturatingLoad=0", command[2])
+        self.assertIn("--numerology=1", command[2])
         self.assertIn("--paperProfile=1", command[2])
 
     def test_aggregate_rows_reports_mean_sd_and_ci(self):
@@ -78,14 +81,14 @@ class CampaignHelpersTest(unittest.TestCase):
 
     def test_paper_checkpoint_rejects_failed_scenario(self):
         rows = [
-            ("metal", "failed", "scheduler assertion", "", "", "", ""),
-            ("composite", "ok", "", "1.0", "0.5", "2.0", "3.0"),
-            ("repeater", "ok", "", "8.0", "0.9", "2.0", "3.0"),
+            ("metal", "failed", "scheduler assertion", "1", "30", "", "", "", ""),
+            ("composite", "ok", "", "1", "30", "1.0", "0.5", "2.0", "3.0"),
+            ("repeater", "ok", "", "1", "30", "8.0", "0.9", "2.0", "3.0"),
         ]
         with tempfile.TemporaryDirectory() as tmp:
             ledger = Path(tmp) / "campaign_runs.csv"
             ledger.write_text(
-                "scenario,status,error,throughput_mbps,pdr,mean_lat_ms,p95_lat_ms\n"
+                "scenario,status,error,numerology,scs_khz,throughput_mbps,pdr,mean_lat_ms,p95_lat_ms\n"
                 + "".join(",".join(row) + "\n" for row in rows),
                 encoding="utf-8",
             )
@@ -96,16 +99,55 @@ class CampaignHelpersTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             ledger = Path(tmp) / "campaign_runs.csv"
             ledger.write_text(
-                "scenario,status,error,throughput_mbps,pdr,mean_lat_ms,p95_lat_ms\n"
-                "metal,ok,,0.0,0.0,nan,nan\n"
-                "composite,ok,,2.0,0.5,3.0,4.0\n"
-                "repeater,ok,,8.0,0.9,2.0,3.0\n",
+                "scenario,status,error,numerology,scs_khz,throughput_mbps,pdr,mean_lat_ms,p95_lat_ms\n"
+                "metal,ok,,1,30,0.0,0.0,nan,nan\n"
+                "composite,ok,,1,30,2.0,0.5,3.0,4.0\n"
+                "repeater,ok,,1,30,8.0,0.9,2.0,3.0\n",
                 encoding="utf-8",
             )
             results = validate_checkpoint(ledger)
         self.assertEqual(set(results), {"metal", "composite", "repeater"})
         self.assertIsNone(results["metal"]["mean_lat_ms"])
         self.assertEqual(results["repeater"]["throughput_mbps"], 8.0)
+
+    def test_paper_checkpoint_rejects_wrong_numerology(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger = Path(tmp) / "campaign_runs.csv"
+            ledger.write_text(
+                "scenario,status,error,numerology,scs_khz,throughput_mbps,pdr,mean_lat_ms,p95_lat_ms\n"
+                "metal,ok,,0,15,0.0,0.0,nan,nan\n"
+                "composite,ok,,1,30,2.0,0.5,3.0,4.0\n"
+                "repeater,ok,,1,30,8.0,0.9,2.0,3.0\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "metal used numerology 0"):
+                validate_checkpoint(ledger)
+
+    def test_paper_checkpoint_rejects_mislabeled_scs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger = Path(tmp) / "campaign_runs.csv"
+            ledger.write_text(
+                "scenario,status,error,numerology,scs_khz,throughput_mbps,pdr,mean_lat_ms,p95_lat_ms\n"
+                "metal,ok,,1,15,0.0,0.0,nan,nan\n"
+                "composite,ok,,1,30,2.0,0.5,3.0,4.0\n"
+                "repeater,ok,,1,30,8.0,0.9,2.0,3.0\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "metal used numerology 1 / 15 kHz"):
+                validate_checkpoint(ledger)
+
+    def test_paper_checkpoint_rejects_fractional_numerology(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger = Path(tmp) / "campaign_runs.csv"
+            ledger.write_text(
+                "scenario,status,error,numerology,scs_khz,throughput_mbps,pdr,mean_lat_ms,p95_lat_ms\n"
+                "metal,ok,,1.5,30,0.0,0.0,nan,nan\n"
+                "composite,ok,,1,30,2.0,0.5,3.0,4.0\n"
+                "repeater,ok,,1,30,8.0,0.9,2.0,3.0\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "metal has non-integer numerology 1.5"):
+                validate_checkpoint(ledger)
 
 
 if __name__ == "__main__":

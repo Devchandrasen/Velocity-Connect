@@ -237,7 +237,7 @@ inline void RunSingle(RunConfig cfg)
   EnsureDir(cfg.outDir);
   const std::string path = cfg.outDir + "/single_run.csv";
   WriteCsvHeader(path,
-    "scenario,speed_kmph,distance_m,num_ues,seed,run,eff_loss_db,throughput_mbps,pdr,tx_pkts,rx_pkts,mean_lat_ms,p50_lat_ms,p95_lat_ms,jain_fairness");
+    "scenario,speed_kmph,distance_m,num_ues,seed,run,eff_loss_db,numerology,scs_khz,throughput_mbps,pdr,tx_pkts,rx_pkts,mean_lat_ms,p50_lat_ms,p95_lat_ms,jain_fairness");
 
   Metrics m = RunOnce(cfg);
   std::ostringstream line;
@@ -248,6 +248,8 @@ inline void RunSingle(RunConfig cfg)
        << cfg.seed << ","
        << cfg.run << ","
        << ComputeEffectivePenetrationLossDb(cfg) << ","
+       << cfg.numerology << ","
+       << ComputeSubcarrierSpacingKHz(cfg.numerology) << ","
        << std::fixed << std::setprecision(9)
        << m.throughputMbps << ","
        << m.pdr << ","
@@ -265,7 +267,7 @@ inline void RunSpeedSweep(RunConfig cfg)
   EnsureDir(cfg.outDir);
   std::string out = cfg.outDir + "/sweep_speed.csv";
   WriteCsvHeader(out,
-    "scenario,speed_kmph,distance_m,num_ues,seed,run,eff_loss_db,throughput_mbps,pdr,tx_pkts,rx_pkts,mean_lat_ms,p50_lat_ms,p95_lat_ms");
+    "scenario,speed_kmph,distance_m,num_ues,seed,run,eff_loss_db,numerology,scs_khz,throughput_mbps,pdr,tx_pkts,rx_pkts,mean_lat_ms,p50_lat_ms,p95_lat_ms");
 
   std::vector<double> speeds = {0, 100, 200, 300, 400, 500};
   for (ScenarioType s : {ScenarioType::METAL, ScenarioType::COMPOSITE, ScenarioType::REPEATER})
@@ -287,6 +289,8 @@ inline void RunSpeedSweep(RunConfig cfg)
            << cfg.seed << ","
            << cfg.run << ","
            << effLoss << ","
+           << cfg.numerology << ","
+           << ComputeSubcarrierSpacingKHz(cfg.numerology) << ","
            << std::fixed << std::setprecision(6)
            << m.throughputMbps << ","
            << m.pdr << ","
@@ -306,7 +310,7 @@ inline void RunDistanceSweep(RunConfig cfg)
   EnsureDir(cfg.outDir);
   std::string out = cfg.outDir + "/sweep_distance.csv";
   WriteCsvHeader(out,
-    "scenario,speed_kmph,distance_m,num_ues,seed,run,eff_loss_db,throughput_mbps,pdr,tx_pkts,rx_pkts,mean_lat_ms,p50_lat_ms,p95_lat_ms");
+    "scenario,speed_kmph,distance_m,num_ues,seed,run,eff_loss_db,numerology,scs_khz,throughput_mbps,pdr,tx_pkts,rx_pkts,mean_lat_ms,p50_lat_ms,p95_lat_ms");
 
   std::vector<double> dists = {100, 300, 500, 800, 1000, 1200, 1500};
 
@@ -331,6 +335,8 @@ inline void RunDistanceSweep(RunConfig cfg)
            << cfg.seed << ","
            << cfg.run << ","
            << effLoss << ","
+           << cfg.numerology << ","
+           << ComputeSubcarrierSpacingKHz(cfg.numerology) << ","
            << std::fixed << std::setprecision(6)
            << m.throughputMbps << ","
            << m.pdr << ","
@@ -350,7 +356,7 @@ inline void RunScalabilitySweep(RunConfig cfg)
   EnsureDir(cfg.outDir);
   std::string out = cfg.outDir + "/sweep_scalability.csv";
   WriteCsvHeader(out,
-    "num_ues,per_ue_offered_mbps,eff_loss_db,aggregate_throughput_mbps,pdr,tx_pkts,rx_pkts,mean_lat_ms,p95_lat_ms,jain_fairness");
+    "num_ues,per_ue_offered_mbps,eff_loss_db,numerology,scs_khz,aggregate_throughput_mbps,pdr,tx_pkts,rx_pkts,mean_lat_ms,p95_lat_ms,jain_fairness");
 
   cfg.scenario = ScenarioType::REPEATER;
   cfg.saturatingLoad = false;
@@ -372,6 +378,8 @@ inline void RunScalabilitySweep(RunConfig cfg)
     line << n << ","
          << cfg.perUeOfferedMbps << ","
          << effLoss << ","
+         << cfg.numerology << ","
+         << ComputeSubcarrierSpacingKHz(cfg.numerology) << ","
          << std::fixed << std::setprecision(6)
          << m.throughputMbps << ","
          << m.pdr << ","

@@ -14,7 +14,7 @@ import json
 import sys
 from pathlib import Path
 
-from research_campaign import build_parser, run_campaign
+from research_campaign import PROFILE_DEFAULTS, build_parser, run_campaign
 
 
 SPEEDS = "0,100,200,300,400,500"
@@ -82,8 +82,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"=== paper family: {name} ===")
         statuses[name] = run_family(args, name, extra)
 
+    paper_numerology = int(PROFILE_DEFAULTS["paper"]["numerology"])
     manifest = {
         "profile": "paper",
+        "numerology": paper_numerology,
+        "subcarrier_spacing_khz": 15 * (2 ** paper_numerology),
         "paper_title": "Enhancing 5G NR Connectivity in High-Speed Railways via Passive Relaying",
         "dependency_fixes": [
             {
