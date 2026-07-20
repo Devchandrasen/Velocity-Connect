@@ -1,110 +1,99 @@
-# Velocity Connect: Passive In-Coach Relaying for 5G NR High-Speed Railway Evaluation
+# Velocity Connect
 
-This repository contains the final reproducibility package for the paper:
+Velocity Connect is an NS-3 / 5G-LENA system-level simulation framework for evaluating passive in-coach relaying for 5G NR connectivity on high-speed railways.
 
-**Passive In-Coach Relaying for 5G NR Connectivity in High-Speed Railways: A Reproducible System-Level Evaluation**
+The repository models three coach configurations:
 
-The code provides an ns-3 / 5G-LENA based system-level framework for evaluating in-coach 5G NR connectivity under coach penetration loss and high mobility. The final release focuses on three coach scenarios:
+- `metal`: 60 dB penetration loss
+- `composite`: 20 dB penetration loss
+- `repeater`: the proposed passive Velocity Connect link budget, approximately 5 dB with the default components
 
-- metallic coach baseline
-- composite coach baseline
-- Velocity Connect passive in-coach relaying
+The simulator reports application-payload throughput, packet delivery ratio, mean/P50/P95 latency, and Jain fairness for multi-UE runs.
 
----
+## What is new in the advanced workflow
 
-## 1. What this repository provides
-
-The repository includes:
-
-- a reproducible ns-3 / 5G-LENA simulation setup for a single-cell high-speed railway downlink
-- an effective-loss model for passive in-coach relaying
-- a fixed-seed speed sweep at 500 m
-- a multi-seed distance sweep at 300 km/h
-- a scalability sweep with increasing UE count
-- CSV logging for throughput, packet delivery ratio, latency and fairness
-- plotting scripts used to regenerate the paper figures
-
----
-
-## 2. Final paper configuration
-
-The final paper results are based on the following configuration:
-
-- Carrier frequency: 3.5 GHz
-- Bandwidth: 100 MHz
-- Subcarrier spacing: 30 kHz
-- gNB transmit power: 40 dBm
-- Traffic: UDP downlink
-- Packet size: 1024 Bytes
-- Offered load per UE: 8.19 Mbps
-- Simulation time: 2 s
-- Application start time: 0.5 s
-- Channel model: 3GPP UMi street canyon
-- LOS: enforced
-- Shadowing: disabled
-- Scheduler: `ns3::NrMacSchedulerOfdmaRR`
-- RLC mode: UM
-
-Coach assumptions used in the paper:
-
-- metallic coach: 60 dB penetration loss
-- composite coach: 20 dB penetration loss
-- Velocity Connect: effective loss ≈ 5 dB
-
-Velocity Connect effective-loss model:
-
-The effective length, denoted as \( L_{\mathrm{eff}} \), is calculated using the following formula:
-
-\[
-L_{\mathrm{eff}} = \max\left(0,\; L_{\mathrm{cable}} + L_{\mathrm{coupling}} + L_{\mathrm{indoor}} - (G_{\mathrm{donor}} + G_{\mathrm{service}})\right)
-\]
-
-In this equation:
-- \( L_{\mathrm{cable}} \) represents the length of the cable,
-- \( L_{\mathrm{coupling}} \) refers to the length contributed by the coupling,
-- \( L_{\mathrm{indoor}} \) indicates the indoor length,
-- \( G_{\mathrm{donor}} \) is the gain from the donor,
-- \( G_{\mathrm{service}} \) is the gain from the service.
-
-The effective length is determined by taking the maximum of 0 and the result of the expression within the parentheses.
-
-Default component values:
-
-- donor antenna gain = 8 dBi
-- service antenna gain = 2 dBi
-- feeder loss = 3 dB
-- coupling / connector loss = 8 dB
-- indoor distribution loss = 4 dB
-
----
-
-## 3. Required simulator version
-
-The final workflow was run with:
-
-- ns-3.46
-- 5G-LENA NR `5g-lena-v4.1.1`
-
----
-
-## 4. Repository layout
+The simulator now supports a parameterized single-run endpoint:
 
 ```text
-.
-├── hsr_apps.h
-├── hsr_io.h
-├── hsr_nr.h
-├── hsr_runner.h
-├── hsr_stats.h
-├── hsr_types.h
-├── hsr_velocity_connect.cc
-├── scripts
-│   ├── run_hsr_campaign_singleproc.py
-│   ├── run_distance_sweep_multiseed.py
-│   ├── plot_hsr_results.py
-│   └── plot_distance_multiseed.py
-├── paper
-│   ├── figures
-│   └── results
-├── legacy
-└── README.md
+velocity_connect --singleRun=1 --scenario=repeater --speed=300 --distance=500 \
+  --numUes=1 --seed=7 --run=11 --outDir=out/raw/example
+```
+
+It writes one machine-readable row to `single_run.csv`. `research_campaign.py` builds a scenario/speed/distance/seed matrix, runs each configuration in an isolated output directory, preserves failures in a run ledger, and produces sample standard deviations and 95% confidence intervals.
+
+## Requirements
+
+- ns-3.46
+- 5G-LENA NR `v4.1.1`
+- Python 3.10 or newer for the campaign runner and tests
+
+The ns-3 source tree and 5G-LENA are intentionally not vendored here. Build the application in the target ns-3 checkout using the normal ns-3 scratch/program workflow, then make sure the resulting program is named `velocity_connect` (or pass `--program`).
+
+## Reproducible campaign
+
+From the ns-3 working directory:
+
+```powershell
+python research_campaign.py --ns3 ./ns3 --program velocity_connect `
+  --scenarios metal,composite,repeater `
+  --speeds 0,100,200,300,400,500 `
+  --distances 500 `
+  --seeds 1,2,3 `
+  --out out/campaign
+```
+
+Use `--dry-run` to inspect the exact commands without spending simulation time. Use `--max-runs` as a guardrail for larger matrices. A nonzero exit code indicates at least one failed run unless `--allow-failures` is supplied.
+
+Outputs:
+
+```text
+out/campaign/
+├── campaign_config.json   # exact matrix and runner settings
+├── campaign_runs.csv      # one row per attempt, including failures
+├── campaign_summary.csv   # mean, sample SD, and 95% CI per metric
+└── raw/<run-id>/single_run.csv
+```
+
+The summary intentionally ignores non-finite latency values when a run receives no valid timestamped packets; the run remains visible in `campaign_runs.csv`.
+
+## Built-in sweeps
+
+The original all-in-one sweeps remain available:
+
+```powershell
+./ns3 run "velocity_connect --doSpeed=1 --doDistance=1 --doScalability=1 --outDir=out"
+```
+
+Disable individual sweeps for a shorter smoke run:
+
+```powershell
+./ns3 run "velocity_connect --doSpeed=1 --doDistance=0 --doScalability=0 --simTime=0.5 --outDir=out/smoke"
+```
+
+## Model configuration
+
+Defaults follow the paper configuration:
+
+- 3.5 GHz carrier, 100 MHz bandwidth, 30 kHz SCS
+- 40 dBm gNB transmit power and 7 dB UE noise figure
+- 3GPP UMi LOS channel with shadowing disabled
+- UDP downlink, 1024-byte packets, 2 s simulation, 0.2 s application start
+- proportional-fair NR scheduling and RLC UM
+
+For the repeater case, the effective loss is computed as:
+
+```text
+max(0, coupling + feeder + indoor - donor_gain - service_gain)
+```
+
+All of these terms are exposed as ns-3 command-line parameters. The single-run endpoint also accepts `--nrScenario`, `--nrCondition`, `--nrChannelModel`, `--shadowing`, `--scheduler`, `--gnbTxPowerDbm`, `--ueNoiseFigureDb`, and traffic controls.
+
+## Tests
+
+The campaign helper tests do not require NS-3:
+
+```powershell
+python -m unittest discover -s tests -v
+```
+
+Before making research claims, run the actual NS-3 campaign, retain `campaign_config.json` and `campaign_runs.csv`, and report the terminal simulator results. Plotting scripts are convenience visualization tools; they do not replace the raw run ledger or repeated-seed analysis.

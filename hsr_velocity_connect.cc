@@ -1,7 +1,7 @@
 #include "ns3/core-module.h"
-#include "hsr/hsr_runner.h"
-#include "hsr/hsr_types.h"
-#include "hsr/hsr_io.h"
+#include "hsr_runner.h"
+#include "hsr_types.h"
+#include "hsr_io.h"
 
 using namespace ns3;
 
@@ -12,6 +12,8 @@ int main(int argc, char* argv[])
   bool doSpeed = true;
   bool doDistance = true;
   bool doScalability = true;
+  bool singleRun = false;
+  std::string scenarioName{"repeater"};
 
   CommandLine cmd;
   cmd.AddValue("outDir", "Output directory", cfg.outDir);
@@ -23,6 +25,9 @@ int main(int argc, char* argv[])
 
   cmd.AddValue("distance", "Distance (m) used for speed sweep", cfg.distanceM);
   cmd.AddValue("speed", "Speed (km/h) used for distance sweep", cfg.speedKmph);
+  cmd.AddValue("numUes", "Number of UEs for a single run", cfg.numUes);
+  cmd.AddValue("scenario", "Scenario: metal, composite, or repeater", scenarioName);
+  cmd.AddValue("singleRun", "Run one parameterized configuration and write single_run.csv", singleRun);
 
   cmd.AddValue("nrScenario", "NR scenario string (UMi/RMa/UMa/etc.)", cfg.nrScenario);
   cmd.AddValue("nrCondition", "NR condition (LOS/NLOS/Default)", cfg.nrCondition);
@@ -61,9 +66,22 @@ int main(int argc, char* argv[])
 
   EnsureDir(cfg.outDir);
 
-  if (doSpeed) RunSpeedSweep(cfg);
-  if (doDistance) RunDistanceSweep(cfg);
-  if (doScalability) RunScalabilitySweep(cfg);
+  if (singleRun)
+  {
+    if (!TryParseScenario(scenarioName, cfg.scenario))
+    {
+      std::cerr << "Unknown scenario '" << scenarioName
+                << "'. Expected metal, composite, or repeater." << std::endl;
+      return 2;
+    }
+    RunSingle(cfg);
+  }
+  else
+  {
+    if (doSpeed) RunSpeedSweep(cfg);
+    if (doDistance) RunDistanceSweep(cfg);
+    if (doScalability) RunScalabilitySweep(cfg);
+  }
 
   std::cerr << "Done. CSVs saved in: " << cfg.outDir << std::endl;
   return 0;

@@ -2,6 +2,7 @@
 #include <string>
 #include <cstdint>
 #include <algorithm>
+#include <cctype>
 
 enum class ScenarioType { METAL, COMPOSITE, REPEATER };
 
@@ -14,6 +15,33 @@ inline std::string ScenarioToString(ScenarioType s)
     case ScenarioType::REPEATER: return "repeater";
   }
   return "unknown";
+}
+
+inline bool TryParseScenario(const std::string& value, ScenarioType& out)
+{
+  std::string normalized;
+  normalized.reserve(value.size());
+  for (char c : value)
+  {
+    normalized.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+  }
+
+  if (normalized == "metal")
+  {
+    out = ScenarioType::METAL;
+    return true;
+  }
+  if (normalized == "composite")
+  {
+    out = ScenarioType::COMPOSITE;
+    return true;
+  }
+  if (normalized == "repeater" || normalized == "velocity-connect" || normalized == "velocity_connect")
+  {
+    out = ScenarioType::REPEATER;
+    return true;
+  }
+  return false;
 }
 
 struct RunConfig

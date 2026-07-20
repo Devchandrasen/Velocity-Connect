@@ -175,11 +175,13 @@ inline Metrics RunOnce(RunConfig cfg)
 
   // Aggregate stats
   uint64_t totalRxBytes = 0;
+  uint64_t totalRxPackets = 0;
   std::vector<double> allDelays;
 
   for (auto& s : sinks)
   {
     totalRxBytes += s->GetRxBytes();
+    totalRxPackets += s->GetRxPackets();
     const auto& d = s->GetDelaysMs();
     allDelays.insert(allDelays.end(), d.begin(), d.end());
   }
@@ -192,7 +194,7 @@ inline Metrics RunOnce(RunConfig cfg)
 
   out.throughputMbps = (totalRxBytes * 8.0) / (effectiveTime * 1e6);
   out.txPackets = totalTxPkts;
-  out.rxPackets = (uint64_t)allDelays.size();
+  out.rxPackets = totalRxPackets;
   out.pdr = (out.txPackets > 0) ? (double)out.rxPackets / (double)out.txPackets : 0.0;
 
   // ✅ reviewer-safe: latency undefined when no packets received
@@ -209,8 +211,12 @@ inline Metrics RunOnce(RunConfig cfg)
     out.p95LatMs  = std::numeric_limits<double>::quiet_NaN();
   }
 
-  // Jain fairness (for multi-UE)
-  if (cfg.numUes > 1)
+  // Jain fairness is exactly 1 for a single active flow.
+  if (cfg.numUes == 1)
+  {
+    out.jainFairness = 1.0;
+  }
+  else if (cfg.numUes > 1)
   {
     std::vector<double> thr(cfg.numUes, 0.0);
     for (uint32_t u = 0; u < cfg.numUes; ++u)
@@ -224,6 +230,34 @@ inline Metrics RunOnce(RunConfig cfg)
 
   Simulator::Destroy();
   return out;
+}
+
+inline void RunSingle(RunConfig cfg)
+{
+  EnsureDir(cfg.outDir);
+  const std::string path = cfg.outDir + "/single_run.csv";
+  WriteCsvHeader(path,
+    "scenario,speed_kmph,distance_m,num_ues,seed,run,eff_loss_db,throughput_mbps,pdr,tx_pkts,rx_pkts,mean_lat_ms,p50_lat_ms,p95_lat_ms,jain_fairness");
+
+  Metrics m = RunOnce(cfg);
+  std::ostringstream line;
+  line << ScenarioToString(cfg.scenario) << ","
+       << cfg.speedKmph << ","
+       << cfg.distanceM << ","
+       << cfg.numUes << ","
+       << cfg.seed << ","
+       << cfg.run << ","
+       << ComputeEffectivePenetrationLossDb(cfg) << ","
+       << std::fixed << std::setprecision(9)
+       << m.throughputMbps << ","
+       << m.pdr << ","
+       << m.txPackets << ","
+       << m.rxPackets << ","
+       << m.meanLatMs << ","
+       << m.p50LatMs << ","
+       << m.p95LatMs << ","
+       << m.jainFairness;
+  AppendCsvLine(path, line.str());
 }
 
 inline void RunSpeedSweep(RunConfig cfg)

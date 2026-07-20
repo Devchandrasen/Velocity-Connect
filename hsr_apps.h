@@ -132,7 +132,8 @@ public:
   void Setup(uint16_t port) { m_port = port; }
 
   uint64_t GetRxPackets() const { return m_rxPackets; }
-  uint64_t GetRxBytes() const { return m_rxBytes; }
+  // Application payload bytes, excluding the 12-byte measurement header.
+  uint64_t GetRxBytes() const { return m_rxPayloadBytes; }
   const std::vector<double>& GetDelaysMs() const { return m_delaysMs; }
 
 private:
@@ -162,12 +163,12 @@ private:
     while ((p = sock->RecvFrom(from)))
     {
       m_rxPackets++;
-      m_rxBytes += p->GetSize();
 
       SeqTsNanoHeader h;
       if (p->GetSize() >= h.GetSerializedSize())
       {
         p->RemoveHeader(h);
+        m_rxPayloadBytes += p->GetSize();
         uint64_t txNs = h.GetTsNs();
         uint64_t nowNs = (uint64_t)Simulator::Now().GetNanoSeconds();
         m_delaysMs.push_back((double)(nowNs - txNs) / 1e6);
@@ -178,6 +179,6 @@ private:
   Ptr<Socket> m_socket;
   uint16_t m_port{0};
   uint64_t m_rxPackets{0};
-  uint64_t m_rxBytes{0};
+  uint64_t m_rxPayloadBytes{0};
   std::vector<double> m_delaysMs;
 };
