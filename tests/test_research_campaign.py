@@ -17,12 +17,13 @@ class CampaignHelpersTest(unittest.TestCase):
 
     def test_build_command_is_shell_free_and_parameterized(self):
         command = build_simulation_command(
-            "./ns3", "velocity_connect", "repeater", 300.0, 500.0, 2, 7, 11,
+            "./ns3", "hsr_velocity_connect", "repeater", 300.0, 500.0, 2, 7, 11,
             Path("out/raw/run_001"),
         )
         self.assertEqual(command[:2], ["./ns3", "run"])
         self.assertEqual(len(command), 3)
         self.assertIn("--singleRun=1", command[2])
+        self.assertIn("hsr_velocity_connect", command[2])
         self.assertIn("--scenario=repeater", command[2])
         self.assertIn("--seed=7", command[2])
         self.assertIn("--numUes=2", command[2])

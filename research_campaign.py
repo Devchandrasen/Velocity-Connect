@@ -306,7 +306,7 @@ def run_campaign(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ns3", default="./ns3", help="Path to the ns-3 wrapper")
-    parser.add_argument("--program", default="velocity_connect", help="Built ns-3 program name")
+    parser.add_argument("--program", default="hsr_velocity_connect", help="Built ns-3 program name")
     parser.add_argument("--workdir", default=".", help="Working directory for the ns-3 wrapper")
     parser.add_argument("--out", default="out/campaign", help="Campaign output directory")
     parser.add_argument("--scenarios", default="metal,composite,repeater")

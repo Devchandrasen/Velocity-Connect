@@ -27,19 +27,30 @@ It writes one machine-readable row to `single_run.csv`. `research_campaign.py` b
 - 5G-LENA NR `v4.1.1`
 - Python 3.10 or newer for the campaign runner and tests
 
-The ns-3 source tree and 5G-LENA are intentionally not vendored here. Build the application in the target ns-3 checkout using the normal ns-3 scratch/program workflow, then make sure the resulting program is named `velocity_connect` (or pass `--program`).
+The ns-3 source tree and 5G-LENA are intentionally not vendored here. The validated local setup uses Ubuntu 22.04 under WSL with an ns-3.46 tree at `/home/codex/velocity-connect-ns3` and the application target `hsr_velocity_connect`.
+
+The upstream compatibility pair is ns-3.46 with 5G-LENA NR `v4.1.1`. From WSL, configure and build it with:
+
+```bash
+cd /home/codex/velocity-connect-ns3
+./ns3 configure --enable-examples --enable-tests
+./ns3 build hsr_velocity_connect -j 2
+```
 
 ## Reproducible campaign
 
-From the ns-3 working directory:
+From WSL, using the shared Windows checkout for campaign code and results:
 
-```powershell
-python research_campaign.py --ns3 ./ns3 --program velocity_connect `
-  --scenarios metal,composite,repeater `
-  --speeds 0,100,200,300,400,500 `
-  --distances 500 `
-  --seeds 1,2,3 `
-  --out out/campaign
+```bash
+python3 /mnt/c/Users/devel/OneDrive/Documents/Velocity-Connect/research_campaign.py \
+  --ns3 /home/codex/velocity-connect-ns3/ns3 \
+  --workdir /home/codex/velocity-connect-ns3 \
+  --program hsr_velocity_connect \
+  --scenarios metal,composite,repeater \
+  --speeds 0,100,200,300,400,500 \
+  --distances 500 \
+  --seeds 1,2,3 \
+  --out /mnt/c/Users/devel/OneDrive/Documents/Velocity-Connect/out/campaign
 ```
 
 Use `--dry-run` to inspect the exact commands without spending simulation time. Use `--max-runs` as a guardrail for larger matrices. A nonzero exit code indicates at least one failed run unless `--allow-failures` is supplied.
@@ -60,14 +71,14 @@ The summary intentionally ignores non-finite latency values when a run receives 
 
 The original all-in-one sweeps remain available:
 
-```powershell
-./ns3 run "velocity_connect --doSpeed=1 --doDistance=1 --doScalability=1 --outDir=out"
+```bash
+./ns3 run hsr_velocity_connect -- --doSpeed=1 --doDistance=1 --doScalability=1 --outDir=out
 ```
 
 Disable individual sweeps for a shorter smoke run:
 
 ```powershell
-./ns3 run "velocity_connect --doSpeed=1 --doDistance=0 --doScalability=0 --simTime=0.5 --outDir=out/smoke"
+./ns3 run hsr_velocity_connect -- --doSpeed=1 --doDistance=0 --doScalability=0 --simTime=0.5 --outDir=out/smoke
 ```
 
 ## Model configuration
