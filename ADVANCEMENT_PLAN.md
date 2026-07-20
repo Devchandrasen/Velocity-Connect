@@ -18,17 +18,19 @@ Paper audit completed on 2026-07-20:
 - The submitted study uses a single serving cell, UMi LOS, shadowing disabled, 3.5 GHz, 100 MHz, 40 dBm, 2 s, 1024-byte UDP packets every 1 ms, and 10 UEs for the speed and distance studies.
 - Its scenarios are 60 dB metal, 20 dB composite, and a component-derived 5 dB passive path: 8 dBi donor + 2 dBi service gain, 3 dB feeder, 8 dB coupling/connector, and 4 dB indoor distribution loss.
 - The repository now exposes this contract through `--profile paper` and `run_paper_campaign.py`, with separate speed, distance, and scalability ledgers.
-- A first live 10-UE check completed for the repeater case but triggered NS-3 scheduler assertions for the low-SINR metal/composite cases. Those failures are retained as a reproducibility defect until isolated; they are not paper-result evidence.
+- A first live 10-UE check completed for the repeater case but triggered NS-3 scheduler assertions for the low-SINR metal/composite cases. Those failures were retained as diagnostic evidence and were not used as paper results.
+- Root causes were isolated to two HARQ scheduler defects fixed upstream after v4.1.1: beam-order heap overflow (`81892efa`) and issue #278's double-debited `uint8_t` symbol budget (`a1aa32c7`). The repository carries revision-guarded production-code backports for the required v4.1.1 dependency.
+- After both backports, the exact 500 km/h, 500 m, 10-UE, seed-7 checkpoint completed 3/3 scenarios and the packaged `nr-test-sched-harq` suite passed. These are stability results, not multi-seed paper evidence.
 
 ## Phase 1 — build and experiment hygiene
 
-1. Add a checked-in WSL setup/sync script so the Windows checkout can be copied into the NS-3 scratch tree without manual commands.
+1. Keep the checked-in WSL sync script and dependency patch aligned with the pinned NS-3/5G-LENA revisions.
 2. Keep the explicit `dev` profile separate from the submitted-paper profile.
 3. Generate paper-family plots directly from campaign summaries with confidence bands and no synthetic fallback.
 4. Add a CI smoke gate: compile the target, run one repeater and one metal case, validate the CSV schema, and fail on missing/non-finite required fields.
-5. Isolate and fix the 10-UE low-SINR scheduler assertion, or document a version/configuration boundary that makes the paper workload unsupported.
+5. Require `verify_paper_checkpoint.py` to pass metal, composite, and repeater before starting a full paper campaign.
 
-Acceptance gate: a clean machine can configure/build and complete the smoke matrix in under 60 seconds; all raw rows retain seed, run, scenario, and configuration provenance.
+Acceptance gate: a pinned environment can sync/build and complete the three-run checkpoint in under five minutes on the validated WSL host; all raw rows retain seed, run, scenario, and configuration provenance.
 
 ## Phase 2 — real mobility and handover model
 
@@ -62,4 +64,4 @@ Acceptance gate: the model passes component-level conservation checks, never pro
 
 ## Recommended next implementation
 
-Complete the paper-profile stability gate first. Then implement Phase 2 as the first substantive research advancement: real multi-cell mobility and handover interruption metrics are the clearest gap between the current framework and an advanced HSR connectivity study. The impact path is: reproducible parity -> field-calibrated passive link budget -> multi-cell handover robustness -> mixed passenger traffic and uplink -> coach-level pilot validation.
+Correct the paper profile's 30 kHz SCS/numerology parity item and rerun the stability gate first. Then implement Phase 2 as the first substantive research advancement: real multi-cell mobility and handover interruption metrics are the clearest gap between the current framework and an advanced HSR connectivity study. The impact path is: reproducible parity -> field-calibrated passive link budget -> multi-cell handover robustness -> mixed passenger traffic and uplink -> coach-level pilot validation.

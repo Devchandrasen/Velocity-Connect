@@ -85,6 +85,22 @@ def main(argv: list[str] | None = None) -> int:
     manifest = {
         "profile": "paper",
         "paper_title": "Enhancing 5G NR Connectivity in High-Speed Railways via Passive Relaying",
+        "dependency_fixes": [
+            {
+                "project": "CTTC 5G-LENA",
+                "base_version": "v4.1.1",
+                "upstream_revision": "81892efac84f2aef0a962b9da176ea7d7b6912b0",
+                "patch": "patches/5g-lena-v4.1.1-harq-beam-order.patch",
+                "reason": "Fix HARQ RR beam-order heap overflow",
+            },
+            {
+                "project": "CTTC 5G-LENA",
+                "base_version": "v4.1.1",
+                "upstream_revision": "a1aa32c757e0f834a4e40654853ce56dee13eca3",
+                "patch": "patches/5g-lena-v4.1.1-harq-symbol-budget.patch",
+                "reason": "Fix DL HARQ symbol-budget underflow (upstream issue #278)",
+            }
+        ],
         "families": families,
         "seeds": args.seeds,
         "statuses": statuses,

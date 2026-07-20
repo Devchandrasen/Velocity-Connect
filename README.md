@@ -34,8 +34,17 @@ The upstream compatibility pair is ns-3.46 with 5G-LENA NR `v4.1.1`. From WSL, c
 ```bash
 cd /home/codex/velocity-connect-ns3
 ./ns3 configure --enable-examples --enable-tests
-./ns3 build hsr_velocity_connect -j 2
+
+bash /mnt/c/Users/devel/OneDrive/Documents/Velocity-Connect/scripts/sync_wsl_ns3.sh
 ```
+
+The sync script revision-checks the NR tree and applies the production portions
+of CTTC upstream fixes `81892efa` (HARQ beam-order heap overflow) and `a1aa32c7`
+(the symbol-budget defect tracked as
+[5G-LENA issue #278](https://gitlab.com/cttc-lena/nr/-/work_items/278)),
+copies the application sources into the NS-3 scratch tree, and builds the
+target. It is idempotent. Use `--check-only` to inspect readiness without
+changing the dependency.
 
 ## Reproducible campaign
 
@@ -99,6 +108,19 @@ python3 plot_paper.py \
 The paper profile is an experiment contract, not a guarantee that a different
 ns-3/5G-LENA build will reproduce every numeric value. A failed simulator run
 stays in `campaign_runs.csv` and must be investigated before making a claim.
+
+Before a full campaign, run the deterministic stability checkpoint:
+
+```bash
+python3 /mnt/c/Users/devel/OneDrive/Documents/Velocity-Connect/verify_paper_checkpoint.py \
+  --out /mnt/c/Users/devel/OneDrive/Documents/Velocity-Connect/out/paper_checkpoint
+```
+
+This runs metal, composite, and repeater with 10 UEs at 500 km/h and 500 m,
+then rejects failed or internally inconsistent results and writes
+`paper_checkpoint_report.json`.
+
+Completed checkpoints and their claim limits are recorded in `RESULTS.md`.
 
 ## Built-in sweeps
 

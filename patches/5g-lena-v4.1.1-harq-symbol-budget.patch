@@ -1,0 +1,56 @@
+From a1aa32c757e0f834a4e40654853ce56dee13eca3 Mon Sep 17 00:00:00 2001
+From: Gabriel Ferreira <gabrielcarvfer@gmail.com>
+Date: Tue, 16 Jun 2026 21:29:42 +0200
+Subject: [PATCH] Backport DL HARQ symbol-budget underflow fix to NR v4.1.1
+
+Backport the production-code portion of upstream CTTC 5G-LENA commit
+a1aa32c757e0f834a4e40654853ce56dee13eca3. The upstream commit fixes issue
+#278 and includes its own scheduler unit tests on the v5.0 line.
+
+ScheduleDlHarq debited the per-slot symbol budget once per retransmission and
+again per beam. With multiple beams this could wrap the uint8_t budget and
+schedule more symbols than the slot contains.
+---
+ model/nr-mac-scheduler-harq-rr.cc | 21 +++++++++++++++++++--
+ 1 file changed, 19 insertions(+), 2 deletions(-)
+
+diff --git a/model/nr-mac-scheduler-harq-rr.cc b/model/nr-mac-scheduler-harq-rr.cc
+--- a/model/nr-mac-scheduler-harq-rr.cc
++++ b/model/nr-mac-scheduler-harq-rr.cc
+@@ -247,8 +247,16 @@ NrMacSchedulerHarqRr::ScheduleDlHarq(
+             else
+             {
+                 // If not reshaping, we just change at most the starting symbol.
+-                // But first we check if there are collisions.
+-                symAvailBackup -= harqProcess.m_dciElement->m_numSym;
++                // Note: do NOT debit symAvail here. In this path every
++                // retransmission of a beam is placed at the same starting
++                // symbol, so the slot symbol budget must be debited exactly
++                // once per beam, by the beam's symbol span, at the end of the
++                // beam loop below (see "symAvail -= symbolsUsedForBeam").
++                // Debiting per retransmission here as well double-counted the
++                // symbols and could underflow the uint8_t budget, which then
++                // over-allocated symbols for the following beams and tripped the
++                // caller assertion "dlSymAvail >= usedHarq".
++                // First, check if there are collisions.
+                 bool collision = false;
+                 for (std::size_t i = 0; i < dlBitmaskBackup.size(); i++)
+                 {
+@@ -354,6 +362,15 @@ NrMacSchedulerHarqRr::ScheduleDlHarq(
+                     startingPoint->m_sym,
+                     slotAlloc->m_varTtiAllocInfo.begin() + preexistingDciNumToBeam,
+                     slotAlloc->m_varTtiAllocInfo.end());
++                // symAvail is a uint8_t: guard against underflow. Every
++                // retransmission placed in this beam was checked against symAvail
++                // above, so the beam span can never exceed it. If this fires, the
++                // symbol budget is being debited more than once for the same
++                // symbols.
++                NS_ASSERT_MSG(symAvail >= symbolsUsedForBeam,
++                              "HARQ beam span (" << +symbolsUsedForBeam
++                                                 << ") exceeds remaining symbols (" << +symAvail
++                                                 << "); symbol budget was double-counted");
+                 currStartingSymbol += symbolsUsedForBeam;
+                 symAvail -= symbolsUsedForBeam;
+             }
+-- 
+2.43.0

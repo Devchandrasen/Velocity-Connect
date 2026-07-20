@@ -1,0 +1,55 @@
+From 81892efac84f2aef0a962b9da176ea7d7b6912b0 Mon Sep 17 00:00:00 2001
+From: Gabriel Ferreira <gabrielcarvfer@gmail.com>
+Date: Fri, 12 Jun 2026 22:53:20 +0000
+Subject: [PATCH] Backport HARQ RR beam-order overflow fix to NR v4.1.1
+
+Backport the production-code portion of upstream CTTC 5G-LENA commit
+81892efac84f2aef0a962b9da176ea7d7b6912b0. The upstream commit includes a
+scheduler regression test on the v5.0 line.
+
+GetBeamOrderRR sized its result to the number of currently active beams but
+indexed it using the persistent round-robin queue, which can be larger. Append
+only currently active beams so the result cannot overflow or contain invalid
+default beam IDs.
+---
+ model/nr-mac-scheduler-harq-rr.cc | 15 ++++++++++-----
+ 1 file changed, 10 insertions(+), 5 deletions(-)
+
+diff --git a/model/nr-mac-scheduler-harq-rr.cc b/model/nr-mac-scheduler-harq-rr.cc
+--- a/model/nr-mac-scheduler-harq-rr.cc
++++ b/model/nr-mac-scheduler-harq-rr.cc
+@@ -86,7 +86,8 @@ NrMacSchedulerHarqRr::InstallReshapeAllocation(
+ std::vector<BeamId>
+ NrMacSchedulerHarqRr::GetBeamOrderRR(NrMacSchedulerNs3::ActiveHarqMap activeHarqMap) const
+ {
+-    std::vector<BeamId> ret(activeHarqMap.size());
++    std::vector<BeamId> ret;
++    ret.reserve(activeHarqMap.size());
+ 
+     for (const auto& el : activeHarqMap)
+     {
+@@ -98,14 +99,18 @@ NrMacSchedulerHarqRr::GetBeamOrderRR(NrMacSchedulerNs3::ActiveHarqMap activeHarq
+         }
+     }
+ 
+-    // Find first active beam in the round-robin queue
++    // The round-robin queue accumulates every beam ever seen, so it may be
++    // larger than the set of currently active beams. Walk the whole queue once,
++    // appending only the active beams (in round-robin order) to the result, and
++    // rotate the queue to preserve fairness across calls. The result therefore
++    // contains exactly the active beams, with no out-of-range writes and no
++    // default-constructed entries that the caller would fail to look up.
+     for (size_t i = 0; i < m_rrBeams.size(); ++i)
+     {
+-        // If front beam in round-robin queue is active,
+-        // put it at the beginning of the order
++        // If front beam in round-robin queue is active, append it to the order
+         if (activeHarqMap.find(m_rrBeams.front()) != activeHarqMap.end())
+         {
+-            ret[i] = m_rrBeams.front();
++            ret.push_back(m_rrBeams.front());
+         }
+         // Move round-robin front queue item to the end
+         m_rrBeams.push_back(m_rrBeams.front());
+-- 
+2.43.0

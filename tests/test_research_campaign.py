@@ -1,5 +1,6 @@
 import math
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -14,6 +15,7 @@ from research_campaign import (
     parse_csv_list,
     resolve_profile,
 )
+from verify_paper_checkpoint import validate_checkpoint
 
 
 class CampaignHelpersTest(unittest.TestCase):
@@ -73,6 +75,37 @@ class CampaignHelpersTest(unittest.TestCase):
         self.assertAlmostEqual(summary["throughput_mbps_std"], math.sqrt(8.0))
         self.assertGreater(summary["throughput_mbps_ci95"], 0.0)
         self.assertEqual(summary["pdr_n"], 2)
+
+    def test_paper_checkpoint_rejects_failed_scenario(self):
+        rows = [
+            ("metal", "failed", "scheduler assertion", "", "", "", ""),
+            ("composite", "ok", "", "1.0", "0.5", "2.0", "3.0"),
+            ("repeater", "ok", "", "8.0", "0.9", "2.0", "3.0"),
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger = Path(tmp) / "campaign_runs.csv"
+            ledger.write_text(
+                "scenario,status,error,throughput_mbps,pdr,mean_lat_ms,p95_lat_ms\n"
+                + "".join(",".join(row) + "\n" for row in rows),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "metal checkpoint failed"):
+                validate_checkpoint(ledger)
+
+    def test_paper_checkpoint_accepts_consistent_zero_reception_result(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger = Path(tmp) / "campaign_runs.csv"
+            ledger.write_text(
+                "scenario,status,error,throughput_mbps,pdr,mean_lat_ms,p95_lat_ms\n"
+                "metal,ok,,0.0,0.0,nan,nan\n"
+                "composite,ok,,2.0,0.5,3.0,4.0\n"
+                "repeater,ok,,8.0,0.9,2.0,3.0\n",
+                encoding="utf-8",
+            )
+            results = validate_checkpoint(ledger)
+        self.assertEqual(set(results), {"metal", "composite", "repeater"})
+        self.assertIsNone(results["metal"]["mean_lat_ms"])
+        self.assertEqual(results["repeater"]["throughput_mbps"], 8.0)
 
 
 if __name__ == "__main__":
