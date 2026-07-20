@@ -7,5 +7,6 @@ fig/
 
 # Python caches
 __pycache__/
+tmp/
 *.py[cod]
 .pytest_cache/

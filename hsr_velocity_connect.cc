@@ -5,9 +5,32 @@
 
 using namespace ns3;
 
+namespace
+{
+bool HasPaperProfileArgument(int argc, char* argv[])
+{
+  for (int i = 1; i < argc; ++i)
+  {
+    std::string arg(argv[i]);
+    if (arg == "--paperProfile=1" || arg == "--paperProfile=true" ||
+        arg == "--paperProfile=True")
+    {
+      return true;
+    }
+  }
+  return false;
+}
+}
+
 int main(int argc, char* argv[])
 {
   RunConfig cfg;
+
+  bool paperProfile = HasPaperProfileArgument(argc, argv);
+  if (paperProfile)
+  {
+    ApplyPaperProfile(cfg);
+  }
 
   bool doSpeed = true;
   bool doDistance = true;
@@ -42,6 +65,7 @@ int main(int argc, char* argv[])
   cmd.AddValue("ueNoiseFigureDb", "UE noise figure (dB)", cfg.ueNoiseFigureDb);
 
   cmd.AddValue("saturatingLoad", "Use saturating traffic (0/1)", cfg.saturatingLoad);
+  cmd.AddValue("appPktSize", "Application packet size in bytes", cfg.appPktSizeBytes);
   cmd.AddValue("perUeOfferedMbps", "Per-UE offered load (Mbps) if not saturating", cfg.perUeOfferedMbps);
   cmd.AddValue("saturatingIntervalUs", "Saturating inter-packet interval (us)", cfg.saturatingIntervalUs);
 
@@ -61,6 +85,7 @@ int main(int argc, char* argv[])
   cmd.AddValue("doSpeed", "Run speed sweep", doSpeed);
   cmd.AddValue("doDistance", "Run distance sweep", doDistance);
   cmd.AddValue("doScalability", "Run scalability sweep", doScalability);
+  cmd.AddValue("paperProfile", "Apply the submitted-paper baseline profile", paperProfile);
 
   cmd.Parse(argc, argv);
 

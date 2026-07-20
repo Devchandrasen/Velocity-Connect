@@ -265,12 +265,9 @@ inline void RunSpeedSweep(RunConfig cfg)
   EnsureDir(cfg.outDir);
   std::string out = cfg.outDir + "/sweep_speed.csv";
   WriteCsvHeader(out,
-    "scenario,speed_kmph,distance_m,eff_loss_db,throughput_mbps,pdr,tx_pkts,rx_pkts,mean_lat_ms,p50_lat_ms,p95_lat_ms");
+    "scenario,speed_kmph,distance_m,num_ues,seed,run,eff_loss_db,throughput_mbps,pdr,tx_pkts,rx_pkts,mean_lat_ms,p50_lat_ms,p95_lat_ms");
 
   std::vector<double> speeds = {0, 100, 200, 300, 400, 500};
-  cfg.numUes = 1;
-  cfg.saturatingLoad = true;
-
   for (ScenarioType s : {ScenarioType::METAL, ScenarioType::COMPOSITE, ScenarioType::REPEATER})
   {
     cfg.scenario = s;
@@ -286,6 +283,9 @@ inline void RunSpeedSweep(RunConfig cfg)
       line << ScenarioToString(s) << ","
            << v << ","
            << cfg.distanceM << ","
+           << cfg.numUes << ","
+           << cfg.seed << ","
+           << cfg.run << ","
            << effLoss << ","
            << std::fixed << std::setprecision(6)
            << m.throughputMbps << ","
@@ -306,12 +306,10 @@ inline void RunDistanceSweep(RunConfig cfg)
   EnsureDir(cfg.outDir);
   std::string out = cfg.outDir + "/sweep_distance.csv";
   WriteCsvHeader(out,
-    "scenario,speed_kmph,distance_m,eff_loss_db,throughput_mbps,pdr,tx_pkts,rx_pkts,mean_lat_ms,p50_lat_ms,p95_lat_ms");
+    "scenario,speed_kmph,distance_m,num_ues,seed,run,eff_loss_db,throughput_mbps,pdr,tx_pkts,rx_pkts,mean_lat_ms,p50_lat_ms,p95_lat_ms");
 
   std::vector<double> dists = {100, 300, 500, 800, 1000, 1200, 1500};
 
-  cfg.numUes = 1;
-  cfg.saturatingLoad = true;
   cfg.speedKmph = 300.0;
 
   for (ScenarioType s : {ScenarioType::METAL, ScenarioType::COMPOSITE, ScenarioType::REPEATER})
@@ -329,6 +327,9 @@ inline void RunDistanceSweep(RunConfig cfg)
       line << ScenarioToString(s) << ","
            << cfg.speedKmph << ","
            << d << ","
+           << cfg.numUes << ","
+           << cfg.seed << ","
+           << cfg.run << ","
            << effLoss << ","
            << std::fixed << std::setprecision(6)
            << m.throughputMbps << ","

@@ -11,14 +11,22 @@ Completed and verified locally on 2026-07-20:
 - A short single-run smoke simulation produces a valid `single_run.csv`.
 - The Python campaign runner has multi-seed execution, failure accounting, and confidence intervals.
 
-The first shell smoke attempt exceeded five minutes because its quoting dropped the single-run arguments and launched the original all-sweeps path. The corrected direct NS-3 invocation and two-run campaign completed successfully. Development and paper profiles should still be kept separate so fast CI checks do not spend time on a full research matrix.
+The first shell smoke attempt exceeded five minutes because its quoting dropped the single-run arguments and launched the original all-sweeps path. The corrected direct NS-3 invocation and two-run campaign completed successfully. Development and paper profiles are now separate so fast CI checks do not spend time on a full research matrix.
+
+Paper audit completed on 2026-07-20:
+
+- The submitted study uses a single serving cell, UMi LOS, shadowing disabled, 3.5 GHz, 100 MHz, 40 dBm, 2 s, 1024-byte UDP packets every 1 ms, and 10 UEs for the speed and distance studies.
+- Its scenarios are 60 dB metal, 20 dB composite, and a component-derived 5 dB passive path: 8 dBi donor + 2 dBi service gain, 3 dB feeder, 8 dB coupling/connector, and 4 dB indoor distribution loss.
+- The repository now exposes this contract through `--profile paper` and `run_paper_campaign.py`, with separate speed, distance, and scalability ledgers.
+- A first live 10-UE check completed for the repeater case but triggered NS-3 scheduler assertions for the low-SINR metal/composite cases. Those failures are retained as a reproducibility defect until isolated; they are not paper-result evidence.
 
 ## Phase 1 — build and experiment hygiene
 
 1. Add a checked-in WSL setup/sync script so the Windows checkout can be copied into the NS-3 scratch tree without manual commands.
-2. Add an explicit `dev` profile with shorter simulation time, lower bandwidth, and non-saturating traffic.
-3. Add a campaign plotter that consumes `campaign_summary.csv` and renders confidence bands without synthetic fallback data.
+2. Keep the explicit `dev` profile separate from the submitted-paper profile.
+3. Generate paper-family plots directly from campaign summaries with confidence bands and no synthetic fallback.
 4. Add a CI smoke gate: compile the target, run one repeater and one metal case, validate the CSV schema, and fail on missing/non-finite required fields.
+5. Isolate and fix the 10-UE low-SINR scheduler assertion, or document a version/configuration boundary that makes the paper workload unsupported.
 
 Acceptance gate: a clean machine can configure/build and complete the smoke matrix in under 60 seconds; all raw rows retain seed, run, scenario, and configuration provenance.
 
@@ -54,4 +62,4 @@ Acceptance gate: the model passes component-level conservation checks, never pro
 
 ## Recommended next implementation
 
-Start with Phase 1. It is low-risk, shortens the feedback loop, and creates the evidence contract needed before changing the radio or handover model. Then implement Phase 2 as the first substantive research advancement: real multi-cell mobility and handover interruption metrics are the clearest gap between the current framework and an advanced HSR connectivity study.
+Complete the paper-profile stability gate first. Then implement Phase 2 as the first substantive research advancement: real multi-cell mobility and handover interruption metrics are the clearest gap between the current framework and an advanced HSR connectivity study. The impact path is: reproducible parity -> field-calibrated passive link budget -> multi-cell handover robustness -> mixed passenger traffic and uplink -> coach-level pilot validation.

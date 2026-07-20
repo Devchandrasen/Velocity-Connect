@@ -119,3 +119,37 @@ inline double ComputeEffectivePenetrationLossDb(const RunConfig& cfg)
 
   return std::max(0.0, leff);
 }
+
+// Apply the submitted-paper baseline before command-line overrides are parsed.
+// This keeps the paper profile explicit while allowing every value to remain
+// independently configurable from the command line.
+inline void ApplyPaperProfile(RunConfig& cfg)
+{
+  cfg.carrierHz = 3.5e9;
+  cfg.bandwidthHz = 100e6;
+  cfg.gnbTxPowerDbm = 40.0;
+  cfg.ueNoiseFigureDb = 7.0;
+  cfg.nrScenario = "UMi";
+  cfg.nrCondition = "LOS";
+  cfg.nrChannelModel = "ThreeGpp";
+  cfg.shadowingEnabled = false;
+
+  cfg.speedKmph = 300.0;
+  cfg.distanceM = 500.0;
+  cfg.simTimeS = 2.0;
+  cfg.appStartS = 0.2;
+
+  cfg.numUes = 10;
+  cfg.appPktSizeBytes = 1024;
+  cfg.saturatingLoad = false;
+  cfg.perUeOfferedMbps = 8.19;
+  cfg.saturatingIntervalUs = 100.0;
+
+  cfg.metalVplDb = 60.0;
+  cfg.compositeVplDb = 20.0;
+  cfg.donorGainDbi = 8.0;
+  cfg.serviceGainDbi = 2.0;
+  cfg.feederCableLossDb = 3.0;
+  cfg.couplingLossDb = 8.0;
+  cfg.indoorDistribLossDb = 4.0;
+}

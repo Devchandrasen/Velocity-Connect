@@ -12,14 +12,14 @@ The simulator reports application-payload throughput, packet delivery ratio, mea
 
 ## What is new in the advanced workflow
 
-The simulator now supports a parameterized single-run endpoint:
+The simulator now supports a parameterized single-run endpoint and an explicit paper profile:
 
 ```text
 velocity_connect --singleRun=1 --scenario=repeater --speed=300 --distance=500 \
   --numUes=1 --seed=7 --run=11 --outDir=out/raw/example
 ```
 
-It writes one machine-readable row to `single_run.csv`. `research_campaign.py` builds a scenario/speed/distance/seed matrix, runs each configuration in an isolated output directory, preserves failures in a run ledger, and produces sample standard deviations and 95% confidence intervals.
+It writes one machine-readable row to `single_run.csv`. `research_campaign.py` builds a scenario/speed/distance/UE-count/seed matrix, runs each configuration in an isolated output directory, preserves failures in a run ledger, and produces sample standard deviations and 95% confidence intervals.
 
 ## Requirements
 
@@ -67,6 +67,39 @@ out/campaign/
 
 The summary intentionally ignores non-finite latency values when a run receives no valid timestamped packets; the run remains visible in `campaign_runs.csv`.
 
+## Submitted-paper reproduction profile
+
+`run_paper_campaign.py` runs the paper's three separate experiment families:
+
+- speed: 0-500 km/h at 500 m, 10 UEs
+- distance: 100-1500 m at 300 km/h, 10 UEs
+- scalability: 10/20/30/40/50 UEs at 300 km/h and 500 m
+
+The profile uses 3.5 GHz, 100 MHz, UMi LOS, shadowing disabled, 2 s simulation,
+1024-byte UDP packets, 1 ms inter-packet spacing (8.19 Mbps/UE), and the
+metal/composite/repeater loss cases from the paper.
+
+```bash
+python3 /mnt/c/Users/devel/OneDrive/Documents/Velocity-Connect/run_paper_campaign.py \
+  --ns3 /home/codex/velocity-connect-ns3/ns3 \
+  --workdir /home/codex/velocity-connect-ns3 \
+  --out /mnt/c/Users/devel/OneDrive/Documents/Velocity-Connect/out/paper_campaign
+```
+
+Generate figures only from completed campaign summaries:
+
+```bash
+python3 plot_paper.py \
+  --speed out/paper_campaign/speed \
+  --distance out/paper_campaign/distance \
+  --scalability out/paper_campaign/scalability \
+  --out-dir out/paper_plots
+```
+
+The paper profile is an experiment contract, not a guarantee that a different
+ns-3/5G-LENA build will reproduce every numeric value. A failed simulator run
+stays in `campaign_runs.csv` and must be investigated before making a claim.
+
 ## Built-in sweeps
 
 The original all-in-one sweeps remain available:
@@ -83,13 +116,17 @@ Disable individual sweeps for a shorter smoke run:
 
 ## Model configuration
 
-Defaults follow the paper configuration:
+The `paper` profile follows the submitted configuration:
 
 - 3.5 GHz carrier, 100 MHz bandwidth, 30 kHz SCS
 - 40 dBm gNB transmit power and 7 dB UE noise figure
 - 3GPP UMi LOS channel with shadowing disabled
 - UDP downlink, 1024-byte packets, 2 s simulation, 0.2 s application start
 - proportional-fair NR scheduling and RLC UM
+
+The default `dev` campaign remains a one-UE, saturating-load smoke profile so
+fast checks do not accidentally consume the full paper matrix. Select the
+paper contract with `--profile paper`.
 
 For the repeater case, the effective loss is computed as:
 

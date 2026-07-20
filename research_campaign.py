@@ -46,6 +46,30 @@ REQUIRED_RESULT_FIELDS = {
 }
 
 
+PROFILE_DEFAULTS: dict[str, dict[str, object]] = {
+    "dev": {
+        "num_ues": 1,
+        "sim_time": 2.0,
+        "app_start": 0.2,
+        "app_pkt_size": 1024,
+        "saturating_load": True,
+        "per_ue_offered_mbps": 8.19,
+        "saturating_interval_us": 100.0,
+        "paper_profile": False,
+    },
+    "paper": {
+        "num_ues": 10,
+        "sim_time": 2.0,
+        "app_start": 0.2,
+        "app_pkt_size": 1024,
+        "saturating_load": False,
+        "per_ue_offered_mbps": 8.19,
+        "saturating_interval_us": 100.0,
+        "paper_profile": True,
+    },
+}
+
+
 def parse_csv_list(raw: str, cast):
     """Parse a comma-separated CLI value while rejecting empty entries."""
 
@@ -70,6 +94,14 @@ def build_simulation_command(
     seed: int,
     run: int,
     out_dir: Path,
+    *,
+    sim_time: float = 2.0,
+    app_start: float = 0.2,
+    app_pkt_size: int = 1024,
+    saturating_load: bool = True,
+    per_ue_offered_mbps: float = 8.19,
+    saturating_interval_us: float = 100.0,
+    paper_profile: bool = False,
 ) -> list[str]:
     """Build an argv-safe NS-3 wrapper command without invoking a shell."""
 
@@ -77,9 +109,33 @@ def build_simulation_command(
         f"{program} --singleRun=1 --scenario={scenario} "
         f"--speed={speed_kmph:g} --distance={distance_m:g} "
         f"--numUes={num_ues} --seed={seed} --run={run} "
+        f"--simTime={sim_time:g} --appStart={app_start:g} "
+        f"--appPktSize={app_pkt_size} --saturatingLoad={int(saturating_load)} "
+        f"--perUeOfferedMbps={per_ue_offered_mbps:g} "
+        f"--saturatingIntervalUs={saturating_interval_us:g} "
+        f"--paperProfile={int(paper_profile)} "
         f"--outDir={out_dir.as_posix()}"
     )
     return [ns3, "run", run_arguments]
+
+
+def resolve_profile(args: argparse.Namespace) -> dict[str, object]:
+    """Resolve profile defaults while preserving explicit CLI overrides."""
+
+    values = dict(PROFILE_DEFAULTS[args.profile])
+    overrides = {
+        "num_ues": args.num_ues,
+        "sim_time": args.sim_time,
+        "app_start": args.app_start,
+        "app_pkt_size": args.app_pkt_size,
+        "saturating_load": args.saturating_load,
+        "per_ue_offered_mbps": args.per_ue_offered_mbps,
+        "saturating_interval_us": args.saturating_interval_us,
+    }
+    for key, value in overrides.items():
+        if value is not None:
+            values[key] = value
+    return values
 
 
 def read_single_result(path: Path) -> dict[str, str]:
@@ -173,6 +229,7 @@ def run_campaign(args: argparse.Namespace) -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
     raw_dir.mkdir(parents=True, exist_ok=True)
 
+    profile = resolve_profile(args)
     scenarios = parse_csv_list(args.scenarios, str)
     unknown_scenarios = sorted(set(scenarios) - {"metal", "composite", "repeater"})
     if unknown_scenarios:
@@ -183,7 +240,13 @@ def run_campaign(args: argparse.Namespace) -> int:
     speeds = parse_csv_list(args.speeds, float)
     distances = parse_csv_list(args.distances, float)
     seeds = parse_csv_list(args.seeds, int)
-    runs = list(product(scenarios, speeds, distances, seeds))
+    if args.num_ues_list.strip():
+        num_ues_values = parse_csv_list(args.num_ues_list, int)
+    else:
+        num_ues_values = [int(profile["num_ues"])]
+    if any(value < 1 for value in num_ues_values):
+        raise ValueError("All UE counts must be at least 1")
+    runs = list(product(scenarios, speeds, distances, num_ues_values, seeds))
     if args.max_runs and len(runs) > args.max_runs:
         raise ValueError(
             f"Campaign contains {len(runs)} runs, exceeding --max-runs={args.max_runs}"
@@ -196,7 +259,15 @@ def run_campaign(args: argparse.Namespace) -> int:
         "speeds_kmph": speeds,
         "distances_m": distances,
         "seeds": seeds,
-        "num_ues": args.num_ues,
+        "num_ues": profile["num_ues"],
+        "num_ues_values": num_ues_values,
+        "profile": args.profile,
+        "sim_time": profile["sim_time"],
+        "app_start": profile["app_start"],
+        "app_pkt_size": profile["app_pkt_size"],
+        "saturating_load": profile["saturating_load"],
+        "per_ue_offered_mbps": profile["per_ue_offered_mbps"],
+        "saturating_interval_us": profile["saturating_interval_us"],
         "run_base": args.run_base,
         "timeout_s": args.timeout,
         "dry_run": args.dry_run,
@@ -207,9 +278,9 @@ def run_campaign(args: argparse.Namespace) -> int:
 
     ledger_rows: list[dict[str, object]] = []
     successful_rows: list[dict[str, str]] = []
-    for index, (scenario, speed, distance, seed) in enumerate(runs):
+    for index, (scenario, speed, distance, num_ues, seed) in enumerate(runs):
         run_number = args.run_base + index
-        run_id = f"run_{index + 1:04d}_{scenario}_{speed:g}kmh_{distance:g}m_seed{seed}"
+        run_id = f"run_{index + 1:04d}_{scenario}_{speed:g}kmh_{distance:g}m_n{num_ues}_seed{seed}"
         run_output = raw_dir / run_id
         run_output.mkdir(parents=True, exist_ok=True)
         command = build_simulation_command(
@@ -218,10 +289,17 @@ def run_campaign(args: argparse.Namespace) -> int:
             scenario,
             speed,
             distance,
-            args.num_ues,
+            num_ues,
             seed,
             run_number,
             run_output,
+            sim_time=float(profile["sim_time"]),
+            app_start=float(profile["app_start"]),
+            app_pkt_size=int(profile["app_pkt_size"]),
+            saturating_load=bool(profile["saturating_load"]),
+            per_ue_offered_mbps=float(profile["per_ue_offered_mbps"]),
+            saturating_interval_us=float(profile["saturating_interval_us"]),
+            paper_profile=bool(profile["paper_profile"]),
         )
         print(f"[{index + 1}/{len(runs)}] {run_id}")
 
@@ -230,7 +308,7 @@ def run_campaign(args: argparse.Namespace) -> int:
             "scenario": scenario,
             "speed_kmph": speed,
             "distance_m": distance,
-            "num_ues": args.num_ues,
+            "num_ues": num_ues,
             "seed": seed,
             "run": run_number,
             "status": "dry_run" if args.dry_run else "failed",
@@ -309,11 +387,19 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--program", default="hsr_velocity_connect", help="Built ns-3 program name")
     parser.add_argument("--workdir", default=".", help="Working directory for the ns-3 wrapper")
     parser.add_argument("--out", default="out/campaign", help="Campaign output directory")
+    parser.add_argument("--profile", choices=sorted(PROFILE_DEFAULTS), default="dev")
     parser.add_argument("--scenarios", default="metal,composite,repeater")
     parser.add_argument("--speeds", default="0,100,200,300,400,500")
     parser.add_argument("--distances", default="500")
     parser.add_argument("--seeds", default="1,2,3")
-    parser.add_argument("--num-ues", type=int, default=1)
+    parser.add_argument("--num-ues", type=int, default=None)
+    parser.add_argument("--num-ues-list", default="", help="Optional comma-separated UE counts")
+    parser.add_argument("--sim-time", type=float, default=None)
+    parser.add_argument("--app-start", type=float, default=None)
+    parser.add_argument("--app-pkt-size", type=int, default=None)
+    parser.add_argument("--saturating-load", type=lambda value: bool(int(value)), default=None)
+    parser.add_argument("--per-ue-offered-mbps", type=float, default=None)
+    parser.add_argument("--saturating-interval-us", type=float, default=None)
     parser.add_argument("--run-base", type=int, default=1)
     parser.add_argument("--timeout", type=float, default=900.0)
     parser.add_argument("--max-runs", type=int, default=0, help="Guardrail; 0 means unlimited")
@@ -325,7 +411,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    if args.num_ues < 1:
+    if args.num_ues is not None and args.num_ues < 1:
         parser.error("--num-ues must be at least 1")
     if args.max_runs < 0:
         parser.error("--max-runs cannot be negative")

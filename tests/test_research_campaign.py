@@ -7,7 +7,13 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from research_campaign import aggregate_rows, build_simulation_command, parse_csv_list
+from research_campaign import (
+    aggregate_rows,
+    build_parser,
+    build_simulation_command,
+    parse_csv_list,
+    resolve_profile,
+)
 
 
 class CampaignHelpersTest(unittest.TestCase):
@@ -27,6 +33,26 @@ class CampaignHelpersTest(unittest.TestCase):
         self.assertIn("--scenario=repeater", command[2])
         self.assertIn("--seed=7", command[2])
         self.assertIn("--numUes=2", command[2])
+        self.assertIn("--saturatingLoad=1", command[2])
+
+    def test_paper_profile_matches_submitted_workload(self):
+        args = build_parser().parse_args(["--profile", "paper"])
+        profile = resolve_profile(args)
+        self.assertEqual(profile["num_ues"], 10)
+        self.assertEqual(profile["app_pkt_size"], 1024)
+        self.assertFalse(profile["saturating_load"])
+        self.assertAlmostEqual(profile["per_ue_offered_mbps"], 8.19)
+
+    def test_paper_command_carries_reproducibility_parameters(self):
+        command = build_simulation_command(
+            "./ns3", "hsr_velocity_connect", "repeater", 300.0, 1500.0, 10, 3, 9,
+            Path("out/raw/paper"), sim_time=2.0, app_start=0.2,
+            app_pkt_size=1024, saturating_load=False,
+            per_ue_offered_mbps=8.19, paper_profile=True,
+        )
+        self.assertIn("--appPktSize=1024", command[2])
+        self.assertIn("--saturatingLoad=0", command[2])
+        self.assertIn("--paperProfile=1", command[2])
 
     def test_aggregate_rows_reports_mean_sd_and_ci(self):
         rows = [
