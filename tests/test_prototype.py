@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+import http.client
 import json
 from pathlib import Path
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -59,6 +61,16 @@ class PrototypeModelTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "schema_version"):
             validate_sample(invalid)
 
+    def test_validate_sample_requires_timezone_and_safe_identity(self) -> None:
+        invalid = sample()
+        invalid["timestamp_utc"] = "2026-07-21T03:00:00"
+        with self.assertRaisesRegex(ValueError, "timezone"):
+            validate_sample(invalid)
+        invalid = sample()
+        invalid["run_id"] = "unsafe\nrun"
+        with self.assertRaisesRegex(ValueError, "control character"):
+            validate_sample(invalid)
+
     def test_store_persists_and_deduplicates(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "samples.jsonl"
@@ -75,6 +87,14 @@ class PrototypeModelTest(unittest.TestCase):
             path = Path(temporary) / "samples.jsonl"
             path.write_text("not-json\n", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, ":1"):
+                MeasurementStore(path)
+
+    def test_store_rejects_duplicate_historical_identity(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "samples.jsonl"
+            encoded = json.dumps(validate_sample(sample()))
+            path.write_text(encoded + "\n" + encoded + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "duplicate evidence identity"):
                 MeasurementStore(path)
 
     def test_store_cap_is_explicit(self) -> None:
@@ -95,6 +115,9 @@ class PrototypeModelTest(unittest.TestCase):
             self.assertEqual(MeasurementStore(path).status()["sample_count"], 20)
 
     def test_report_requires_paired_location(self) -> None:
+        empty = build_report([])
+        self.assertFalse(empty["ready"])
+        self.assertIn("no samples", empty["reason"])
         report = build_report([sample()])
         self.assertFalse(report["ready"])
         self.assertEqual(report["paired"]["pairs"], 0)
@@ -171,6 +194,74 @@ class PrototypeHttpTest(unittest.TestCase):
         error = json.loads(raised.exception.read())
         self.assertIn("rsrp_dbm", error["error"])
         self.assertEqual(self.store.status()["sample_count"], 0)
+
+    def test_http_dashboard_and_unknown_routes(self) -> None:
+        with urlopen(self.base_url + "/", timeout=2) as response:
+            self.assertEqual(response.status, 200)
+            self.assertIn(b"<title>test</title>", response.read())
+        with self.assertRaises(HTTPError) as raised:
+            urlopen(self.base_url + "/missing", timeout=2)
+        self.assertEqual(raised.exception.code, 404)
+
+        request = Request(self.base_url + "/missing", data=b"{}", method="POST")
+        with self.assertRaises(HTTPError) as raised:
+            urlopen(request, timeout=2)
+        self.assertEqual(raised.exception.code, 404)
+
+    def test_http_body_protocol_errors_are_visible(self) -> None:
+        port = self.server.server_address[1]
+
+        connection = http.client.HTTPConnection("127.0.0.1", port, timeout=2)
+        connection.request("POST", "/api/v1/samples", body=b"{")
+        response = connection.getresponse()
+        self.assertEqual(response.status, 400)
+        self.assertIn("valid UTF-8 JSON", json.loads(response.read())["error"])
+        connection.close()
+
+        connection = http.client.HTTPConnection("127.0.0.1", port, timeout=2)
+        connection.putrequest("POST", "/api/v1/samples")
+        connection.endheaders()
+        response = connection.getresponse()
+        self.assertEqual(response.status, 411)
+        response.read()
+        connection.close()
+
+        connection = http.client.HTTPConnection("127.0.0.1", port, timeout=2)
+        connection.putrequest("POST", "/api/v1/samples")
+        connection.putheader("Content-Length", str(64 * 1024 + 1))
+        connection.endheaders()
+        response = connection.getresponse()
+        self.assertEqual(response.status, 413)
+        response.read()
+        connection.close()
+
+        connection = http.client.HTTPConnection("127.0.0.1", port, timeout=2)
+        connection.putrequest("POST", "/api/v1/samples")
+        connection.putheader("Content-Length", "not-a-number")
+        connection.endheaders()
+        response = connection.getresponse()
+        self.assertEqual(response.status, 400)
+        response.read()
+        connection.close()
+
+    def test_http_storage_limit_and_failure_are_visible(self) -> None:
+        self.store.max_samples = 1
+        self._post(sample())
+        with self.assertRaises(HTTPError) as raised:
+            self._post(sample(2))
+        self.assertEqual(raised.exception.code, 507)
+        self.assertIn("full", json.loads(raised.exception.read())["error"])
+
+        with patch.object(self.store, "add", side_effect=OSError("disk unavailable")):
+            with self.assertRaises(HTTPError) as raised:
+                self._post(sample(3))
+        self.assertEqual(raised.exception.code, 500)
+        self.assertIn("persistence failed", json.loads(raised.exception.read())["error"])
+
+    def test_create_server_requires_dashboard_file(self) -> None:
+        missing = Path(self.temporary.name) / "missing.html"
+        with self.assertRaisesRegex(FileNotFoundError, "dashboard not found"):
+            create_server("127.0.0.1", 0, self.store, missing)
 
 
 if __name__ == "__main__":
