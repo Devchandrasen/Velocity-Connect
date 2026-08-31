@@ -48,6 +48,27 @@ def _handler_for(store: MeasurementStore, dashboard_html: bytes) -> type[BaseHTT
         def _path(self) -> str:
             return urlsplit(self.path).path.rstrip("/") or "/"
 
+        def _discard_bounded_request_body(self) -> None:
+            """Drain a small request body before replying on an unknown route.
+
+            Leaving unread POST bytes can make Windows close the socket with a
+            TCP reset, hiding the intended HTTP error from the client.
+            """
+            raw_length = self.headers.get("Content-Length")
+            if raw_length is None:
+                return
+            try:
+                content_length = int(raw_length)
+            except ValueError:
+                self.close_connection = True
+                return
+            if content_length <= 0:
+                return
+            if content_length > MAX_REQUEST_BYTES:
+                self.close_connection = True
+                return
+            self.rfile.read(content_length)
+
         def do_GET(self) -> None:  # noqa: N802 - BaseHTTPRequestHandler API
             path = self._path()
             if path == "/healthz":
@@ -80,6 +101,7 @@ def _handler_for(store: MeasurementStore, dashboard_html: bytes) -> type[BaseHTT
 
         def do_POST(self) -> None:  # noqa: N802 - BaseHTTPRequestHandler API
             if self._path() != "/api/v1/samples":
+                self._discard_bounded_request_body()
                 self._send_json(HTTPStatus.NOT_FOUND, {"error": "route not found"})
                 return
 
