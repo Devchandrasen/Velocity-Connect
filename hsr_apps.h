@@ -135,6 +135,7 @@ public:
   // Application payload bytes, excluding the 12-byte measurement header.
   uint64_t GetRxBytes() const { return m_rxPayloadBytes; }
   const std::vector<double>& GetDelaysMs() const { return m_delaysMs; }
+  const std::vector<uint64_t>& GetRxTimesNs() const { return m_rxTimesNs; }
 
 private:
   void StartApplication() override
@@ -163,6 +164,7 @@ private:
     while ((p = sock->RecvFrom(from)))
     {
       m_rxPackets++;
+      m_rxTimesNs.push_back((uint64_t)Simulator::Now().GetNanoSeconds());
 
       SeqTsNanoHeader h;
       if (p->GetSize() >= h.GetSerializedSize())
@@ -181,4 +183,5 @@ private:
   uint64_t m_rxPackets{0};
   uint64_t m_rxPayloadBytes{0};
   std::vector<double> m_delaysMs;
+  std::vector<uint64_t> m_rxTimesNs;
 };

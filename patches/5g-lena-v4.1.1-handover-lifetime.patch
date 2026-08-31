@@ -1,0 +1,57 @@
+diff --git a/helper/nr-helper.cc b/helper/nr-helper.cc
+index f70758a1..b5fb2a44 100644
+--- a/helper/nr-helper.cc
++++ b/helper/nr-helper.cc
+@@ -910,6 +910,7 @@ NrHelper::InstallSingleGnbDevice(
+     dev->SetAttribute("NrGnbComponentCarrierManager", PointerValue(ccmGnbManager));
+     dev->SetCcMap(ccMap);
+     dev->SetAttribute("NrGnbRrc", PointerValue(rrc));
++    dev->SetAttribute("NrHandoverAlgorithm", PointerValue(handoverAlgorithm));
+ 
+     n->AddDevice(dev);
+ 
+diff --git a/model/nr-gnb-net-device.cc b/model/nr-gnb-net-device.cc
+index 3e287cf2..c57defd3 100644
+--- a/model/nr-gnb-net-device.cc
++++ b/model/nr-gnb-net-device.cc
+@@ -43,7 +43,12 @@ NrGnbNetDevice::GetTypeId()
+                           "The RRC layer associated with the gNB",
+                           PointerValue(),
+                           MakePointerAccessor(&NrGnbNetDevice::m_rrc),
+-                          MakePointerChecker<NrGnbRrc>());
++                          MakePointerChecker<NrGnbRrc>())
++            .AddAttribute("NrHandoverAlgorithm",
++                          "The handover algorithm associated to this GnbNetDevice",
++                          PointerValue(),
++                          MakePointerAccessor(&NrGnbNetDevice::m_handoverAlgorithm),
++                          MakePointerChecker<NrHandoverAlgorithm>());
+     return tid;
+ }
+ 
+@@ -258,6 +263,7 @@ NrGnbNetDevice::ConfigureCell()
+     NS_ASSERT_MSG(!m_ccMap.empty(), "Component carrier map is empty");
+     m_isCellConfigured = true;
+     m_rrc->ConfigureCell(m_ccMap);
++    m_handoverAlgorithm->Initialize();
+ }
+ 
+ bool
+diff --git a/model/nr-gnb-net-device.h b/model/nr-gnb-net-device.h
+index 49e2384c..ff5a6b99 100644
+--- a/model/nr-gnb-net-device.h
++++ b/model/nr-gnb-net-device.h
+@@ -5,6 +5,7 @@
+ #define NR_GNB_NET_DEVICE_H
+ 
+ #include "nr-fh-control.h"
++#include "nr-handover-algorithm.h"
+ #include "nr-net-device.h"
+ 
+ #include "ns3/deprecated.h"
+@@ -218,6 +219,7 @@ class NrGnbNetDevice : public NrNetDevice
+ 
+   private:
+     Ptr<NrGnbRrc> m_rrc;
++    Ptr<NrHandoverAlgorithm> m_handoverAlgorithm; ///< the handover algorithm
+ 
+    uint16_t m_cellId; //!< Cell ID. Set by the helper.

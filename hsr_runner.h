@@ -18,6 +18,7 @@
 #include "hsr_apps.h"
 #include "hsr_stats.h"
 #include "hsr_nr.h"
+#include "hsr_handover.h"
 
 using namespace ns3;
 
@@ -27,18 +28,25 @@ inline Metrics RunOnce(RunConfig cfg)
 
   RngSeedManager::SetSeed(cfg.seed);
   RngSeedManager::SetRun(cfg.run);
+  ResetIpv4QueueDiscShortTransportHeaderHashEvents();
 
   NodeContainer gnbNodes, ueNodes, remoteHostContainer;
-  gnbNodes.Create(1);
+  gnbNodes.Create(cfg.numGnbs);
   ueNodes.Create(cfg.numUes);
   remoteHostContainer.Create(1);
   Ptr<Node> remoteHost = remoteHostContainer.Get(0);
 
   // Mobility
   MobilityHelper gnbMob;
+  Ptr<ListPositionAllocator> gnbPositions = CreateObject<ListPositionAllocator>();
+  for (uint32_t g = 0; g < cfg.numGnbs; ++g)
+  {
+    gnbPositions->Add(
+      Vector(cfg.gnbSpacingM * g, cfg.gnbLateralOffsetM, cfg.gnbHeight));
+  }
+  gnbMob.SetPositionAllocator(gnbPositions);
   gnbMob.SetMobilityModel("ns3::ConstantPositionMobilityModel");
   gnbMob.Install(gnbNodes);
-  gnbNodes.Get(0)->GetObject<MobilityModel>()->SetPosition(Vector(0.0, 0.0, cfg.gnbHeight));
 
   MobilityHelper ueMob;
   ueMob.SetMobilityModel("ns3::ConstantVelocityMobilityModel");
@@ -57,13 +65,35 @@ inline Metrics RunOnce(RunConfig cfg)
   internet.Install(remoteHostContainer);
   internet.Install(ueNodes);
 
+  Ipv4DropTracker ipv4DropTracker;
+  for (auto nodes : {remoteHostContainer, ueNodes})
+  {
+    for (uint32_t index = 0; index < nodes.GetN(); ++index)
+    {
+      Ptr<Ipv4L3Protocol> ipv4 = nodes.Get(index)->GetObject<Ipv4L3Protocol>();
+      if (!ipv4 ||
+          !ipv4->TraceConnectWithoutContext(
+            "Drop", MakeCallback(&Ipv4DropTracker::OnDrop, &ipv4DropTracker)))
+      {
+        throw std::runtime_error("Unable to connect the IPv4 drop trace source");
+      }
+    }
+  }
+
   // NR + EPC
   Ptr<NrHelper> nrHelper = CreateObject<NrHelper>();
   Ptr<NrPointToPointEpcHelper> epcHelper = CreateObject<NrPointToPointEpcHelper>();
   nrHelper->SetEpcHelper(epcHelper);
 
-  Ptr<IdealBeamformingHelper> bfHelper = CreateObject<IdealBeamformingHelper>();
-  nrHelper->SetBeamformingHelper(bfHelper);
+  // Ideal serving-link beamforming does not create neighbour-cell beam tasks
+  // and suppresses usable A3 measurements in this 5G-LENA release. Preserve it
+  // for the legacy single-cell profile; corridor runs use the helper's
+  // isotropic antenna defaults so neighbour RSRP remains observable.
+  if (!cfg.enableHandover)
+  {
+    Ptr<IdealBeamformingHelper> bfHelper = CreateObject<IdealBeamformingHelper>();
+    nrHelper->SetBeamformingHelper(bfHelper);
+  }
 
   ConfigureNrHelper(nrHelper, cfg);
 
@@ -82,21 +112,29 @@ inline Metrics RunOnce(RunConfig cfg)
   // UE PHY
   nrHelper->SetUePhyAttribute("NoiseFigure", DoubleValue(cfg.ueNoiseFigureDb));
 
-  // Apply effective penetration loss (Velocity Connect model)
+  // Apply the selected coach/passive-feedthrough system-level abstraction.
   double effLossDb = ComputeEffectivePenetrationLossDb(cfg);
 
-  // Equivalent link-budget approach: reduce effective TxPower by effLoss
+  // Reciprocal equivalent-link abstraction: apply the same coach/feedthrough
+  // loss to the transmitting PHY in each direction. Setting both ends avoids
+  // the former downlink-only bias while each individual radio link still
+  // contains the loss exactly once.
   nrHelper->SetGnbPhyAttribute("TxPower", DoubleValue(cfg.gnbTxPowerDbm - effLossDb));
+  nrHelper->SetUePhyAttribute("TxPower", DoubleValue(cfg.ueTxPowerDbm - effLossDb));
 
   if (cfg.verbose)
   {
     std::cerr << "[hsr] scenario=" << ScenarioToString(cfg.scenario)
               << " effLossDb=" << effLossDb
-              << " (donor=" << cfg.donorGainDbi
+              << " passiveModel=" << PassiveModelToString(cfg.passiveModel)
+              << " declaredPassiveLossDb=" << cfg.declaredPassiveLossDb
+              << " donor=" << cfg.donorGainDbi
               << " service=" << cfg.serviceGainDbi
               << " cable=" << cfg.feederCableLossDb
               << " indoor=" << cfg.indoorDistribLossDb
               << " coupling=" << cfg.couplingLossDb
+              << " effectiveGnbTxDbm=" << (cfg.gnbTxPowerDbm - effLossDb)
+              << " effectiveUeTxDbm=" << (cfg.ueTxPowerDbm - effLossDb)
               << ")\n";
   }
 
@@ -112,7 +150,8 @@ inline Metrics RunOnce(RunConfig cfg)
 
   Ipv4AddressHelper ipv4h;
   ipv4h.SetBase("1.0.0.0", "255.0.0.0");
-  ipv4h.Assign(internetDevs);
+  Ipv4InterfaceContainer internetIfaces = ipv4h.Assign(internetDevs);
+  const Ipv4Address remoteHostAddress = internetIfaces.GetAddress(1);
 
   Ipv4StaticRoutingHelper ipv4RoutingHelper;
   Ptr<Ipv4StaticRouting> remoteHostStaticRouting =
@@ -129,13 +168,64 @@ inline Metrics RunOnce(RunConfig cfg)
     ueStaticRouting->SetDefaultRoute(epcHelper->GetUeDefaultGatewayAddress(), 1);
   }
 
-  // Attach UEs
-  nrHelper->AttachToClosestGnb(ueDevs, gnbDevs);
+  HandoverTracker handoverTracker;
+  std::map<uint64_t, uint32_t> imsiToUe;
+  const uint16_t initialCellId =
+    DynamicCast<NrGnbNetDevice>(gnbDevs.Get(0))->GetCellId();
+
+  // Attach UEs. Corridor runs begin on cell 0 so A3 measurement reports drive
+  // subsequent X2 handovers; legacy single-cell runs retain closest-cell attach.
+  if (cfg.enableHandover)
+  {
+    for (uint32_t g = 0; g < gnbDevs.GetN(); ++g)
+    {
+      Ptr<NrGnbRrc> gnbRrc =
+        DynamicCast<NrGnbNetDevice>(gnbDevs.Get(g))->GetRrc();
+      const bool reportConnected = gnbRrc->TraceConnectWithoutContext(
+        "RecvMeasurementReport",
+        MakeCallback(&HandoverTracker::OnMeasurementReport, &handoverTracker));
+      if (!reportConnected)
+      {
+        throw std::runtime_error("Unable to connect the gNB measurement-report trace source");
+      }
+    }
+
+    for (uint32_t u = 0; u < ueDevs.GetN(); ++u)
+    {
+      nrHelper->AttachToGnb(ueDevs.Get(u), gnbDevs.Get(0));
+    }
+    nrHelper->AddX2Interface(gnbNodes);
+  }
+  else
+  {
+    nrHelper->AttachToClosestGnb(ueDevs, gnbDevs);
+  }
+
+  if (cfg.enableHandover)
+  {
+    for (uint32_t u = 0; u < ueDevs.GetN(); ++u)
+    {
+      Ptr<NrUeNetDevice> ueDevice = DynamicCast<NrUeNetDevice>(ueDevs.Get(u));
+      imsiToUe[ueDevice->GetImsi()] = u;
+      Ptr<NrUeRrc> rrc = ueDevice->GetRrc();
+      const bool startConnected = rrc->TraceConnectWithoutContext(
+        "HandoverStart", MakeCallback(&HandoverTracker::OnStart, &handoverTracker));
+      const bool endConnected = rrc->TraceConnectWithoutContext(
+        "HandoverEndOk", MakeCallback(&HandoverTracker::OnEndOk, &handoverTracker));
+      const bool errorConnected = rrc->TraceConnectWithoutContext(
+        "HandoverEndError", MakeCallback(&HandoverTracker::OnEndError, &handoverTracker));
+      if (!startConnected || !endConnected || !errorConnected)
+      {
+        throw std::runtime_error("Unable to connect one or more UE handover trace sources");
+      }
+    }
+  }
 
   // Apps
   uint16_t basePort = 9000;
   std::vector<Ptr<UdpLatencySink>> sinks;
   std::vector<Ptr<UdpSeqTsClient>> clients;
+  const double appStopS = ResolveApplicationStopS(cfg);
 
   for (uint32_t u = 0; u < cfg.numUes; ++u)
   {
@@ -143,12 +233,20 @@ inline Metrics RunOnce(RunConfig cfg)
 
     Ptr<UdpLatencySink> sink = CreateObject<UdpLatencySink>();
     sink->Setup(port);
-    ueNodes.Get(u)->AddApplication(sink);
+    Ptr<Node> sinkNode =
+      cfg.trafficDirection == TrafficDirection::DOWNLINK
+        ? ueNodes.Get(u)
+        : remoteHost;
+    sinkNode->AddApplication(sink);
     sink->SetStartTime(Seconds(cfg.appStartS));
-    sink->SetStopTime(Seconds(cfg.simTimeS));
+    sink->SetStopTime(Seconds(appStopS));
     sinks.push_back(sink);
 
-    InetSocketAddress dst = InetSocketAddress(ueIfaces.GetAddress(u), port);
+    const Ipv4Address destinationAddress =
+      cfg.trafficDirection == TrafficDirection::DOWNLINK
+        ? ueIfaces.GetAddress(u)
+        : remoteHostAddress;
+    InetSocketAddress dst = InetSocketAddress(destinationAddress, port);
 
     Time interval;
     if (cfg.saturatingLoad)
@@ -164,38 +262,149 @@ inline Metrics RunOnce(RunConfig cfg)
 
     Ptr<UdpSeqTsClient> client = CreateObject<UdpSeqTsClient>();
     client->Setup(dst, cfg.appPktSizeBytes, interval);
-    remoteHost->AddApplication(client);
+    Ptr<Node> clientNode =
+      cfg.trafficDirection == TrafficDirection::DOWNLINK
+        ? remoteHost
+        : ueNodes.Get(u);
+    clientNode->AddApplication(client);
     client->SetStartTime(Seconds(cfg.appStartS));
-    client->SetStopTime(Seconds(cfg.simTimeS));
+    client->SetStopTime(Seconds(appStopS));
     clients.push_back(client);
   }
 
   Simulator::Stop(Seconds(cfg.simTimeS));
   Simulator::Run();
+  out.badIpv4LengthDrops = ipv4DropTracker.GetBadLengthDrops();
+  out.shortTransportHeaderHashEvents =
+    GetIpv4QueueDiscShortTransportHeaderHashEvents();
 
   // Aggregate stats
   uint64_t totalRxBytes = 0;
   uint64_t totalRxPackets = 0;
   std::vector<double> allDelays;
 
-  for (auto& s : sinks)
+  std::vector<double> perUeThroughput;
+  perUeThroughput.reserve(cfg.numUes);
+  for (uint32_t u = 0; u < cfg.numUes; ++u)
   {
+    auto& s = sinks.at(u);
+    auto& c = clients.at(u);
     totalRxBytes += s->GetRxBytes();
     totalRxPackets += s->GetRxPackets();
     const auto& d = s->GetDelaysMs();
+    const auto& receiveTimes = s->GetRxTimesNs();
     allDelays.insert(allDelays.end(), d.begin(), d.end());
+    const std::size_t recordedPackets = std::min(d.size(), receiveTimes.size());
+    for (std::size_t index = 0; index < recordedPackets; ++index)
+    {
+      PacketReception reception;
+      reception.ueIndex = u;
+      reception.receiveTimeS = static_cast<double>(receiveTimes[index]) / 1e9;
+      reception.latencyMs = d[index];
+      out.packetReceptions.push_back(reception);
+    }
+    const double effectiveTime = appStopS - cfg.appStartS;
+    UeMetrics ue;
+    ue.ueIndex = u;
+    ue.txPackets = c->GetTxPackets();
+    ue.rxPackets = s->GetRxPackets();
+    ue.throughputMbps =
+      effectiveTime > 0.0 ? (s->GetRxBytes() * 8.0) / (effectiveTime * 1e6) : 0.0;
+    ue.pdr =
+      ue.txPackets > 0 ? static_cast<double>(ue.rxPackets) / ue.txPackets : 0.0;
+    if (!d.empty())
+    {
+      ue.meanLatMs = std::accumulate(d.begin(), d.end(), 0.0) / d.size();
+      ue.p95LatMs = Percentile(d, 0.95);
+    }
+    out.ueMetrics.push_back(ue);
+    perUeThroughput.push_back(ue.throughputMbps);
   }
 
   uint64_t totalTxPkts = 0;
   for (auto& c : clients) totalTxPkts += c->GetTxPackets();
 
-  double effectiveTime = cfg.simTimeS - cfg.appStartS;
+  if (cfg.enableHandover)
+  {
+    for (const auto& item : imsiToUe)
+    {
+      handoverTracker.AddApplicationGap(item.first, sinks.at(item.second)->GetRxTimesNs());
+      Ptr<NrUeNetDevice> ueDevice =
+        DynamicCast<NrUeNetDevice>(ueDevs.Get(item.second));
+      UeCellState cellState;
+      cellState.imsi = item.first;
+      cellState.initialCellId = initialCellId;
+      cellState.finalCellId = ueDevice->GetRrc()->GetCellId();
+      out.ueCellStates.push_back(cellState);
+    }
+    for (const auto& event : handoverTracker.Events())
+    {
+      const bool inMeasurementWindow =
+        !cfg.guardedCorridor ||
+        (event.startTimeS >= cfg.appStartS && event.startTimeS < appStopS);
+      if (inMeasurementWindow)
+      {
+        out.handoverEvents.push_back(event);
+      }
+    }
+    for (const auto& measurement : handoverTracker.Measurements())
+    {
+      const bool inMeasurementWindow =
+        !cfg.guardedCorridor ||
+        (measurement.timeS >= cfg.appStartS && measurement.timeS < appStopS);
+      if (inMeasurementWindow)
+      {
+        out.rsrpMeasurements.push_back(measurement);
+      }
+    }
+    out.handoverAttempts = static_cast<uint32_t>(out.handoverEvents.size());
+
+    std::vector<double> durations;
+    std::vector<double> applicationGaps;
+    for (const auto& event : out.handoverEvents)
+    {
+      if (event.completed && event.success)
+      {
+        out.handoverSuccesses++;
+      }
+      else
+      {
+        out.handoverFailures++;
+      }
+      if (std::isfinite(event.protocolDurationMs))
+      {
+        durations.push_back(event.protocolDurationMs);
+      }
+      if (std::isfinite(event.applicationGapMs))
+      {
+        applicationGaps.push_back(event.applicationGapMs);
+      }
+    }
+    if (!durations.empty())
+    {
+      out.meanHandoverDurationMs =
+        std::accumulate(durations.begin(), durations.end(), 0.0) / durations.size();
+      out.maxHandoverDurationMs = *std::max_element(durations.begin(), durations.end());
+    }
+    if (!applicationGaps.empty())
+    {
+      out.meanApplicationGapMs =
+        std::accumulate(applicationGaps.begin(), applicationGaps.end(), 0.0) /
+        applicationGaps.size();
+      out.maxApplicationGapMs =
+        *std::max_element(applicationGaps.begin(), applicationGaps.end());
+    }
+  }
+
+  double effectiveTime = appStopS - cfg.appStartS;
   if (effectiveTime <= 0.0) effectiveTime = cfg.simTimeS;
 
   out.throughputMbps = (totalRxBytes * 8.0) / (effectiveTime * 1e6);
   out.txPackets = totalTxPkts;
   out.rxPackets = totalRxPackets;
   out.pdr = (out.txPackets > 0) ? (double)out.rxPackets / (double)out.txPackets : 0.0;
+  out.p05UeThroughputMbps = Percentile(perUeThroughput, 0.05);
+  out.medianUeThroughputMbps = Percentile(perUeThroughput, 0.50);
 
   // ✅ reviewer-safe: latency undefined when no packets received
   if (!allDelays.empty())
@@ -237,29 +446,186 @@ inline void RunSingle(RunConfig cfg)
   EnsureDir(cfg.outDir);
   const std::string path = cfg.outDir + "/single_run.csv";
   WriteCsvHeader(path,
-    "scenario,speed_kmph,distance_m,num_ues,seed,run,eff_loss_db,numerology,scs_khz,throughput_mbps,pdr,tx_pkts,rx_pkts,mean_lat_ms,p50_lat_ms,p95_lat_ms,jain_fairness");
+    "scenario,passive_model,traffic_direction,nr_scenario,nr_condition,shadowing,"
+    "speed_kmph,distance_m,gnb_height_m,gnb_lateral_offset_m,ue_height_m,"
+    "num_ues,num_gnbs,gnb_spacing_m,guarded_corridor,channel_update_period_ms,"
+    "sim_time_s,app_start_s,app_stop_s,enable_srs,"
+    "enable_handover,use_ideal_rrc,handover_hysteresis_db,handover_ttt_ms,seed,run,"
+    "declared_passive_loss_db,"
+    "feeder_loss_db,coupling_loss_db,indoor_path_loss_db,donor_gain_dbi,"
+    "service_gain_dbi,network_loss_db,aperture_gain_db,eff_loss_db,"
+    "gnb_tx_power_dbm,ue_tx_power_dbm,effective_gnb_tx_power_dbm,"
+    "effective_ue_tx_power_dbm,"
+    "numerology,scs_khz,throughput_mbps,p05_ue_throughput_mbps,"
+    "median_ue_throughput_mbps,pdr,tx_pkts,rx_pkts,mean_lat_ms,"
+    "p50_lat_ms,p95_lat_ms,jain_fairness,handover_attempts,handover_successes,"
+    "handover_failures,mean_handover_duration_ms,max_handover_duration_ms,"
+    "mean_application_gap_ms,max_application_gap_ms,bad_ipv4_length_drops,"
+    "short_transport_header_hash_events");
 
   Metrics m = RunOnce(cfg);
+  PassiveLinkBudget passiveBudget;
+  const bool hasComponentBudget =
+    cfg.scenario == ScenarioType::REPEATER &&
+    cfg.passiveModel == PassiveModelType::COMPONENT_BUDGET;
+  if (hasComponentBudget)
+  {
+    passiveBudget = ComputePassiveLinkBudget(cfg);
+  }
+  const double unavailable = std::numeric_limits<double>::quiet_NaN();
   std::ostringstream line;
   line << ScenarioToString(cfg.scenario) << ","
+       << PassiveModelToString(cfg.passiveModel) << ","
+       << TrafficDirectionToString(cfg.trafficDirection) << ","
+       << cfg.nrScenario << ","
+       << cfg.nrCondition << ","
+       << (cfg.shadowingEnabled ? 1 : 0) << ","
        << cfg.speedKmph << ","
        << cfg.distanceM << ","
+       << cfg.gnbHeight << ","
+       << cfg.gnbLateralOffsetM << ","
+       << cfg.ueHeight << ","
        << cfg.numUes << ","
+       << cfg.numGnbs << ","
+       << cfg.gnbSpacingM << ","
+       << (cfg.guardedCorridor ? 1 : 0) << ","
+       << cfg.channelUpdatePeriodMs << ","
+       << cfg.simTimeS << ","
+       << cfg.appStartS << ","
+       << ResolveApplicationStopS(cfg) << ","
+       << (cfg.enableSrs ? 1 : 0) << ","
+       << (cfg.enableHandover ? 1 : 0) << ","
+       << (cfg.useIdealRrc ? 1 : 0) << ","
+       << cfg.handoverHysteresisDb << ","
+       << cfg.handoverTimeToTriggerMs << ","
        << cfg.seed << ","
        << cfg.run << ","
+       << cfg.declaredPassiveLossDb << ","
+       << (hasComponentBudget ? passiveBudget.feederLossDb : unavailable) << ","
+       << (hasComponentBudget ? passiveBudget.couplingLossDb : unavailable) << ","
+       << (hasComponentBudget ? passiveBudget.indoorPathLossDb : unavailable) << ","
+       << (hasComponentBudget ? passiveBudget.donorGainDbi : unavailable) << ","
+       << (hasComponentBudget ? passiveBudget.serviceGainDbi : unavailable) << ","
+       << (hasComponentBudget ? passiveBudget.networkLossDb : unavailable) << ","
+       << (hasComponentBudget ? passiveBudget.apertureGainDb : unavailable) << ","
        << ComputeEffectivePenetrationLossDb(cfg) << ","
+       << cfg.gnbTxPowerDbm << ","
+       << cfg.ueTxPowerDbm << ","
+       << (cfg.gnbTxPowerDbm - ComputeEffectivePenetrationLossDb(cfg)) << ","
+       << (cfg.ueTxPowerDbm - ComputeEffectivePenetrationLossDb(cfg)) << ","
        << cfg.numerology << ","
        << ComputeSubcarrierSpacingKHz(cfg.numerology) << ","
        << std::fixed << std::setprecision(9)
        << m.throughputMbps << ","
+       << m.p05UeThroughputMbps << ","
+       << m.medianUeThroughputMbps << ","
        << m.pdr << ","
        << m.txPackets << ","
        << m.rxPackets << ","
        << m.meanLatMs << ","
        << m.p50LatMs << ","
        << m.p95LatMs << ","
-       << m.jainFairness;
+       << m.jainFairness << ","
+       << m.handoverAttempts << ","
+       << m.handoverSuccesses << ","
+       << m.handoverFailures << ","
+       << m.meanHandoverDurationMs << ","
+       << m.maxHandoverDurationMs << ","
+       << m.meanApplicationGapMs << ","
+       << m.maxApplicationGapMs << ","
+       << m.badIpv4LengthDrops << ","
+       << m.shortTransportHeaderHashEvents;
   AppendCsvLine(path, line.str());
+
+  const std::string ueMetricsPath = cfg.outDir + "/ue_metrics.csv";
+  WriteCsvHeader(
+    ueMetricsPath,
+    "ue_index,traffic_direction,tx_pkts,rx_pkts,throughput_mbps,pdr,"
+    "mean_lat_ms,p95_lat_ms");
+  for (const auto& ue : m.ueMetrics)
+  {
+    std::ostringstream ueLine;
+    ueLine << ue.ueIndex << ","
+           << TrafficDirectionToString(cfg.trafficDirection) << ","
+           << ue.txPackets << ","
+           << ue.rxPackets << ","
+           << std::fixed << std::setprecision(9)
+           << ue.throughputMbps << ","
+           << ue.pdr << ","
+           << ue.meanLatMs << ","
+           << ue.p95LatMs;
+    AppendCsvLine(ueMetricsPath, ueLine.str());
+  }
+
+  const std::string packetReceptionPath = cfg.outDir + "/packet_receptions.csv";
+  WriteCsvHeader(
+    packetReceptionPath,
+    "ue_index,traffic_direction,receive_time_s,latency_ms");
+  for (const auto& reception : m.packetReceptions)
+  {
+    std::ostringstream receptionLine;
+    receptionLine << reception.ueIndex << ","
+                  << TrafficDirectionToString(cfg.trafficDirection) << ","
+                  << std::fixed << std::setprecision(9)
+                  << reception.receiveTimeS << ","
+                  << reception.latencyMs;
+    AppendCsvLine(packetReceptionPath, receptionLine.str());
+  }
+
+  const std::string eventPath = cfg.outDir + "/handover_events.csv";
+  WriteCsvHeader(
+    eventPath,
+    "imsi,source_cell_id,target_cell_id,final_cell_id,start_time_s,end_time_s,"
+    "protocol_duration_ms,application_gap_ms,success,completed");
+  for (const auto& event : m.handoverEvents)
+  {
+    std::ostringstream eventLine;
+    eventLine << event.imsi << ","
+              << event.sourceCellId << ","
+              << event.targetCellId << ","
+              << event.finalCellId << ","
+              << std::fixed << std::setprecision(9)
+              << event.startTimeS << ","
+              << event.endTimeS << ","
+              << event.protocolDurationMs << ","
+              << event.applicationGapMs << ","
+              << (event.success ? 1 : 0) << ","
+              << (event.completed ? 1 : 0);
+    AppendCsvLine(eventPath, eventLine.str());
+  }
+
+  const std::string servingCellPath = cfg.outDir + "/ue_serving_cells.csv";
+  WriteCsvHeader(servingCellPath, "imsi,initial_cell_id,final_cell_id,changed");
+  for (const auto& state : m.ueCellStates)
+  {
+    std::ostringstream stateLine;
+    stateLine << state.imsi << ","
+              << state.initialCellId << ","
+              << state.finalCellId << ","
+              << (state.initialCellId != state.finalCellId ? 1 : 0);
+    AppendCsvLine(servingCellPath, stateLine.str());
+  }
+
+  const std::string measurementPath = cfg.outDir + "/rsrp_measurements.csv";
+  WriteCsvHeader(
+    measurementPath,
+    "time_s,imsi,serving_cell_id,serving_rsrp_code,serving_rsrp_dbm,"
+    "neighbour_cell_id,neighbour_rsrp_code,neighbour_rsrp_dbm,has_neighbour");
+  for (const auto& sample : m.rsrpMeasurements)
+  {
+    std::ostringstream sampleLine;
+    sampleLine << std::fixed << std::setprecision(9)
+               << sample.timeS << ","
+               << sample.imsi << ","
+               << sample.servingCellId << ","
+               << static_cast<uint32_t>(sample.servingRsrpCode) << ","
+               << sample.servingRsrpDbm << ","
+               << sample.neighbourCellId << ","
+               << static_cast<uint32_t>(sample.neighbourRsrpCode) << ","
+               << sample.neighbourRsrpDbm << ","
+               << (sample.hasNeighbour ? 1 : 0);
+    AppendCsvLine(measurementPath, sampleLine.str());
+  }
 }
 
 inline void RunSpeedSweep(RunConfig cfg)

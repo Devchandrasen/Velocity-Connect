@@ -1,65 +1,132 @@
 # Velocity Connect
 
-Velocity Connect is an NS-3 / 5G-LENA system-level simulation framework for evaluating passive in-coach relaying for 5G NR connectivity on high-speed railways.
+Velocity Connect is a fail-closed ns-3/5G-LENA and HFSS research workflow for
+testing the **conditional feasibility** of a passive roof-to-cabin RF
+feedthrough for 5G NR high-speed-rail connectivity. It deliberately keeps
+three evidence classes separate:
+
+- the solved HFSS artifact is a two-port n78 donor coupon, not a complete
+  donor-feeder-service product;
+- the network experiment uses predeclared reciprocal scalar-loss hypotheses,
+  not HFSS gain or pattern import; and
+- hardware, coach, route, and moving-train validation remain external gates.
+
+This GitHub repository is implementation-only. It contains executable source,
+tests, pinned dependency metadata, selected native HFSS projects, and compact
+machine-readable fixtures. Manuscript sources, generated PDFs and figures,
+bulk solver trees, patent material, and local campaign outputs are excluded.
+Start with [REPRODUCIBILITY.md](REPRODUCIBILITY.md) for the clean-clone gates.
 
 The repository models three coach configurations:
 
-- `metal`: 60 dB penetration loss
-- `composite`: 20 dB penetration loss
-- `repeater`: the proposed passive Velocity Connect link budget, approximately 5 dB with the default components
+- `metal`: a 60 dB scalar penetration comparator;
+- `composite`: a 20 dB scalar penetration comparator; and
+- `repeater`: a declared total passive-path loss (6.5 dB in the principal
+  transaction contract, with separate 1.5-26 dB sensitivity points).
 
-The simulator reports application-payload throughput, packet delivery ratio, mean/P50/P95 latency, and Jain fairness for multi-UE runs.
+The simulator reports application-payload throughput, packet delivery ratio,
+mean/P50/P95 latency, Jain fairness, and—on corridor runs—A3-RSRP/X2 handover
+events, success/failure, protocol duration, application packet gaps, serving
+cell changes, and RSRP measurement reports.
 
-## What is new in the advanced workflow
+## Canonical transaction-v3 workflow
 
-The simulator now supports a parameterized single-run endpoint and an explicit paper profile:
+The submission workflow is pinned to:
+
+- ns-3.48 commit `d2add90b452d600cfb4859baed8e9ea633519447`;
+- 5G-LENA v5.0 commit `47a3adc263f773556eaadac5a5341458dbc61c47`;
+- Ubuntu 22.04 directly or under WSL2; and
+- 64-bit CPython 3.12.10 on Windows for frozen analysis and packaging.
+
+Bootstrap and sync the pinned simulator:
+
+```bash
+bash scripts/bootstrap_ns3_v5.sh "$HOME/ns-3.48-velocity-connect" "$PWD"
+bash scripts/sync_wsl_ns3_v5.sh --check-only \
+  "$HOME/ns-3.48-velocity-connect" "$PWD"
+```
+
+Run the guarded 816-run contract:
+
+```bash
+cd "$HOME/ns-3.48-velocity-connect"
+bash velocity_connect_tools/run_transaction_campaigns_v7.sh
+```
+
+The contract contains six gNBs, a 10 m track offset, a fixed
+1.75-3.75-ISD interior measurement window, a 4-ISD simulation stop, 5 ms
+channel updates, non-ideal RRC, all-flexible dynamic TDD, SRS disabled as a
+declared limitation, DL/UL traffic, 300-500 km/h, 300-800 m ISD, and 1-16 UEs.
+The A3 screen uses development seeds only for selection and reserves separate
+simulator seeds for a nonconfirmatory secondary audit.
+
+Run the separate 60-run declared-loss sweep and the official 5G-LENA gate only
+after the main campaign is terminal:
+
+```bash
+bash velocity_connect_tools/run_publication_loss_sweep_v7.sh
+bash velocity_connect_tools/run_official_test_gate_v5.sh
+```
+
+The official gate covers dynamic-TDD pattern generation plus the pinned X2,
+handover-delay, handover-scenario, measurement, and interference suites. See
+`REPRODUCIBILITY.md` for the clean-machine build and verification contract.
+
+The simulator also supports a parameterized single-run endpoint:
 
 ```text
 velocity_connect --singleRun=1 --scenario=repeater --speed=300 --distance=500 \
   --numUes=1 --seed=7 --run=11 --outDir=out/raw/example
 ```
 
-It writes one machine-readable row to `single_run.csv`. `research_campaign.py` builds a scenario/speed/distance/UE-count/seed matrix, runs each configuration in an isolated output directory, preserves failures in a run ledger, and produces sample standard deviations and 95% confidence intervals.
+It writes one machine-readable row to `single_run.csv`.
+`research_campaign.py` builds a scenario/speed/distance/UE-count/seed matrix,
+runs each configuration in an isolated output directory, preserves failures
+in a run ledger, and produces sample standard deviations and 95% confidence
+intervals.
 
 ## Requirements
 
-- ns-3.46
-- 5G-LENA NR `v4.1.1`
-- Python 3.10 or newer for the campaign runner and tests
+- Linux campaign runtime: Python 3.10.12, CMake 3.22.1, g++ 11.4.0.
+- Windows analysis runtime: CPython 3.12.10, 64-bit, pip 26.2, hash-locked
+  dependencies.
+- HFSS re-solving: compatible licensed AEDT. The repository includes selected
+  native projects and compact four-port exports, but no licence and no measured
+  product.
 
-The ns-3 source tree and 5G-LENA are intentionally not vendored here. The validated local setup uses Ubuntu 22.04 under WSL with an ns-3.46 tree at `/home/codex/velocity-connect-ns3` and the application target `hsr_velocity_connect`.
+The current v5.0 campaign records two upstream applicability audits. The
+v5.1-development handover-RACH fix does not alter this homogeneous contract
+because all gNBs use identical RACH defaults. The v5.0 FDD/NLOS patch warning
+does not apply to the one-BWP all-flexible TDD setup. Neither assessment
+extends the claim to heterogeneous RACH or FDD.
 
-The upstream compatibility pair is ns-3.46 with 5G-LENA NR `v4.1.1`. From WSL, configure and build it with:
+Run the current project tests with the exact Windows environment:
 
-```bash
-cd /home/codex/velocity-connect-ns3
-./ns3 configure --enable-examples --enable-tests
-
-bash /mnt/c/Users/devel/OneDrive/Documents/Velocity-Connect/scripts/sync_wsl_ns3.sh
+```powershell
+py -3.12 -m venv .venv-reproduction
+.\.venv-reproduction\Scripts\python.exe -m pip install -r environment\requirements-lock.txt
+.\.venv-reproduction\Scripts\python.exe scripts\verify_source_manifest.py
+.\.venv-reproduction\Scripts\python.exe -m pytest -q
 ```
 
-The sync script revision-checks the NR tree and applies the production portions
-of CTTC upstream fixes `81892efa` (HARQ beam-order heap overflow) and `a1aa32c7`
-(the symbol-budget defect tracked as
-[5G-LENA issue #278](https://gitlab.com/cttc-lena/nr/-/work_items/278)),
-copies the application sources into the NS-3 scratch tree, and builds the
-target. It is idempotent. Use `--check-only` to inspect readiness without
-changing the dependency.
+## Legacy and generic campaign utilities
 
-## Reproducible campaign
+The sections below document older ns-3.46/5G-LENA v4.1.1 and generic
+development workflows retained for provenance. They are **not** the
+transaction-v3 submission evidence and must not be mixed with it.
 
-From WSL, using the shared Windows checkout for campaign code and results:
+From Linux or WSL, using paths chosen by the operator:
 
 ```bash
-python3 /mnt/c/Users/devel/OneDrive/Documents/Velocity-Connect/research_campaign.py \
-  --ns3 /home/codex/velocity-connect-ns3/ns3 \
-  --workdir /home/codex/velocity-connect-ns3 \
+python3 research_campaign.py \
+  --ns3 "$HOME/ns-3.48-velocity-connect/ns3" \
+  --workdir "$HOME/ns-3.48-velocity-connect" \
   --program hsr_velocity_connect \
   --scenarios metal,composite,repeater \
   --speeds 0,100,200,300,400,500 \
   --distances 500 \
   --seeds 1,2,3 \
-  --out /mnt/c/Users/devel/OneDrive/Documents/Velocity-Connect/out/campaign
+  --out out/campaign
 ```
 
 Use `--dry-run` to inspect the exact commands without spending simulation time. Use `--max-runs` as a guardrail for larger matrices. A nonzero exit code indicates at least one failed run unless `--allow-failures` is supplied.
@@ -76,7 +143,7 @@ out/campaign/
 
 The summary intentionally ignores non-finite latency values when a run receives no valid timestamped packets; the run remains visible in `campaign_runs.csv`.
 
-## Submitted-paper reproduction profile
+## Legacy single-cell reproduction profile
 
 `run_paper_campaign.py` runs the paper's three separate experiment families:
 
@@ -91,10 +158,10 @@ paper. Numerology is applied explicitly to the gNB PHY; 5G-LENA propagates it
 to attached UEs. Every raw result row records both `numerology` and `scs_khz`.
 
 ```bash
-python3 /mnt/c/Users/devel/OneDrive/Documents/Velocity-Connect/run_paper_campaign.py \
-  --ns3 /home/codex/velocity-connect-ns3/ns3 \
-  --workdir /home/codex/velocity-connect-ns3 \
-  --out /mnt/c/Users/devel/OneDrive/Documents/Velocity-Connect/out/paper_campaign
+python3 run_paper_campaign.py \
+  --ns3 "$HOME/ns-3.48-velocity-connect/ns3" \
+  --workdir "$HOME/ns-3.48-velocity-connect" \
+  --out out/legacy_single_cell
 ```
 
 Generate figures only from completed campaign summaries:
@@ -114,8 +181,10 @@ stays in `campaign_runs.csv` and must be investigated before making a claim.
 Before a full campaign, run the deterministic stability checkpoint:
 
 ```bash
-python3 /mnt/c/Users/devel/OneDrive/Documents/Velocity-Connect/verify_paper_checkpoint.py \
-  --out /mnt/c/Users/devel/OneDrive/Documents/Velocity-Connect/out/paper_checkpoint
+python3 verify_paper_checkpoint.py \
+  --ns3 "$HOME/ns-3.48-velocity-connect/ns3" \
+  --workdir "$HOME/ns-3.48-velocity-connect" \
+  --out out/legacy_checkpoint
 ```
 
 This runs metal, composite, and repeater with 10 UEs at 500 km/h and 500 m,
@@ -123,6 +192,60 @@ then rejects failed, internally inconsistent, or non-30-kHz results and writes
 `paper_checkpoint_report.json`.
 
 Completed checkpoints and their claim limits are recorded in `RESULTS.md`.
+
+## Advanced multi-cell corridor
+
+The rejected-paper profile remains a one-cell `legacy_scalar` baseline. New
+work uses the `corridor` profile and `component_budget` model:
+
+```bash
+python3 run_corridor_campaign.py \
+  --ns3 "$HOME/ns-3.48-velocity-connect/ns3" \
+  --workdir "$HOME/ns-3.48-velocity-connect" \
+  --out out/corridor-smoke \
+  --scenarios repeater \
+  --speeds 500 \
+  --seeds 1,2,3 \
+  --num-ues 1 \
+  --sim-time 13 \
+  --max-runs 3
+```
+
+5G-LENA v4.1.1 corridor runs are currently validated with ideal RRC. The
+recorded A3/X2 events and application packet gaps are simulator evidence;
+ideal-RRC protocol duration is not a real signalling-delay claim.
+
+Use the stricter bounded checkpoint before accepting the corridor capability:
+
+```bash
+python3 verify_corridor_checkpoint.py \
+  --ns3 "$HOME/ns-3.48-velocity-connect/ns3" \
+  --workdir "$HOME/ns-3.48-velocity-connect" \
+  --out out/corridor_checkpoint
+```
+
+Every seed must contain a completed handover, a serving-cell change, and a
+neighbour-RSRP trigger record. Passing it is still not OTA, hardware,
+random-access, or field validation.
+
+## Measurement-calibrated component budget
+
+Copy `measurement_template.csv`, replace the header-only file with calibrated
+VNA/OTA rows, then run:
+
+```bash
+python3 calibrate_passive_model.py measured_passive_components.csv \
+  --out out/passive-calibration
+```
+
+Each calibrated row includes ready-to-pass `campaign_arguments`; those
+arguments are accepted by `research_campaign.py` and
+`run_corridor_campaign.py`. The summary uses a two-sided 95% Student-t
+interval, including for small measurement sets.
+
+The calibration pipeline contains no synthetic measurements. It rejects
+positive passive S21, non-finite values, and unsupported net-gain budgets.
+See `EXPERIMENT_PROTOCOL.md`.
 
 ## Built-in sweeps
 
@@ -140,7 +263,7 @@ Disable individual sweeps for a shorter smoke run:
 
 ## Model configuration
 
-The `paper` profile follows the submitted configuration:
+The `paper` compatibility profile follows the legacy single-cell configuration:
 
 - 3.5 GHz carrier, 100 MHz bandwidth, 30 kHz SCS
 - 40 dBm gNB transmit power and 7 dB UE noise figure
@@ -149,26 +272,29 @@ The `paper` profile follows the submitted configuration:
 - proportional-fair NR scheduling and RLC UM
 
 The default `dev` campaign remains a one-UE, saturating-load smoke profile so
-fast checks do not accidentally consume the full paper matrix. Select the
-paper contract with `--profile paper`.
+fast checks do not accidentally consume the full legacy matrix. Select the
+compatibility contract with `--profile paper`.
 
-For the repeater case, the effective loss is computed as:
+For the new component-budget repeater case, the effective loss is computed as:
 
 ```text
-max(0, coupling + feeder + indoor - donor_gain - service_gain)
+coupling + feeder + indoor - donor_gain - service_gain
 ```
 
-All of these terms are exposed as ns-3 command-line parameters. The single-run
+Indoor loss appears exactly once, and invalid negative equivalent loss is
+rejected rather than silently clamped. All terms are exposed as ns-3
+command-line parameters. The single-run
 endpoint also accepts `--numerology`, `--nrScenario`, `--nrCondition`,
 `--nrChannelModel`, `--shadowing`, `--scheduler`, `--gnbTxPowerDbm`,
 `--ueNoiseFigureDb`, and traffic controls.
 
 ## Tests
 
-The campaign helper tests do not require NS-3:
+The CPU-only implementation tests do not require ns-3 or HFSS:
 
 ```powershell
-python -m unittest discover -s tests -v
+python scripts\verify_source_manifest.py
+python -m pytest -q
 ```
 
 Before making research claims, run the actual NS-3 campaign, retain `campaign_config.json` and `campaign_runs.csv`, and report the terminal simulator results. Plotting scripts are convenience visualization tools; they do not replace the raw run ledger or repeated-seed analysis.

@@ -1,4 +1,7 @@
 numpy>=2.0
 pandas>=2.0
+scipy>=1.13
 matplotlib>=3.8
 seaborn>=0.13
+scikit-rf>=1.6
+pytest>=8.0

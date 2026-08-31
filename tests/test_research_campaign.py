@@ -14,8 +14,10 @@ from research_campaign import (
     build_simulation_command,
     parse_csv_list,
     resolve_profile,
+    validate_profile,
 )
 from verify_paper_checkpoint import validate_checkpoint
+from statistical_evidence import t_critical_95
 
 
 class CampaignHelpersTest(unittest.TestCase):
@@ -31,12 +33,29 @@ class CampaignHelpersTest(unittest.TestCase):
         self.assertEqual(command[:2], ["./ns3", "run"])
         self.assertEqual(len(command), 3)
         self.assertIn("--singleRun=1", command[2])
+        self.assertIn("--gnbHeightM=10", command[2])
+        self.assertIn("--gnbLateralOffsetM=0", command[2])
+        self.assertIn("--ueHeightM=1.5", command[2])
         self.assertIn("hsr_velocity_connect", command[2])
         self.assertIn("--scenario=repeater", command[2])
         self.assertIn("--seed=7", command[2])
         self.assertIn("--numUes=2", command[2])
         self.assertIn("--numerology=0", command[2])
         self.assertIn("--saturatingLoad=1", command[2])
+        self.assertIn("--passiveModel=component_budget", command[2])
+        self.assertIn("--numGnbs=1", command[2])
+        self.assertIn("--enableHandover=0", command[2])
+        self.assertIn("--guardedCorridor=0", command[2])
+        self.assertIn("--channelUpdatePeriodMs=0", command[2])
+        self.assertIn("--enableSrs=0", command[2])
+        self.assertIn("--declaredPassiveLossDb=6.5", command[2])
+        self.assertIn("--donorGainDbi=8", command[2])
+        self.assertIn("--serviceGainDbi=2", command[2])
+        self.assertIn("--feederCableLossDb=3", command[2])
+        self.assertIn("--indoorDistribLossDb=4", command[2])
+        self.assertIn("--couplingLossDb=8", command[2])
+        self.assertIn("--gnbTxPowerDbm=40", command[2])
+        self.assertIn("--ueTxPowerDbm=23", command[2])
 
     def test_paper_profile_matches_submitted_workload(self):
         args = build_parser().parse_args(["--profile", "paper"])
@@ -46,6 +65,146 @@ class CampaignHelpersTest(unittest.TestCase):
         self.assertEqual(profile["app_pkt_size"], 1024)
         self.assertFalse(profile["saturating_load"])
         self.assertAlmostEqual(profile["per_ue_offered_mbps"], 8.19)
+        self.assertEqual(profile["passive_model"], "legacy_scalar")
+        self.assertFalse(profile["enable_handover"])
+        self.assertTrue(profile["use_ideal_rrc"])
+        self.assertEqual(profile["legacy_repeater_loss_db"], 5.0)
+        self.assertEqual(profile["gnb_tx_power_dbm"], 40.0)
+        self.assertEqual(profile["ue_tx_power_dbm"], 23.0)
+
+    def test_tx_power_overrides_are_carried_to_both_link_directions(self):
+        args = build_parser().parse_args(
+            [
+                "--profile",
+                "corridor",
+                "--gnb-tx-power-dbm",
+                "37",
+                "--ue-tx-power-dbm",
+                "20",
+            ]
+        )
+        profile = resolve_profile(args)
+        self.assertEqual(profile["gnb_tx_power_dbm"], 37.0)
+        self.assertEqual(profile["ue_tx_power_dbm"], 20.0)
+        command = build_simulation_command(
+            "./ns3",
+            "hsr_velocity_connect",
+            "repeater",
+            500.0,
+            100.0,
+            10,
+            1,
+            1,
+            Path("out/raw/reciprocal"),
+            gnb_tx_power_dbm=float(profile["gnb_tx_power_dbm"]),
+            ue_tx_power_dbm=float(profile["ue_tx_power_dbm"]),
+        )
+        self.assertIn("--gnbTxPowerDbm=37", command[2])
+        self.assertIn("--ueTxPowerDbm=20", command[2])
+
+    def test_corridor_profile_enables_real_handover_configuration(self):
+        args = build_parser().parse_args(["--profile", "corridor"])
+        profile = resolve_profile(args)
+        self.assertEqual(profile["num_gnbs"], 3)
+        self.assertEqual(profile["gnb_height_m"], 10.0)
+        self.assertEqual(profile["gnb_lateral_offset_m"], 10.0)
+        self.assertEqual(profile["channel_update_period_ms"], 5.0)
+        self.assertEqual(profile["ue_height_m"], 1.5)
+        self.assertTrue(profile["enable_handover"])
+        self.assertEqual(profile["passive_model"], "component_budget")
+        self.assertTrue(profile["use_ideal_rrc"])
+        command = build_simulation_command(
+            "./ns3",
+            "hsr_velocity_connect",
+            "repeater",
+            500.0,
+            100.0,
+            10,
+            1,
+            1,
+            Path("out/raw/corridor"),
+            num_gnbs=int(profile["num_gnbs"]),
+            enable_handover=bool(profile["enable_handover"]),
+            passive_model=str(profile["passive_model"]),
+        )
+        self.assertIn("--numGnbs=3", command[2])
+        self.assertIn("--enableHandover=1", command[2])
+
+    def test_guarded_corridor_requires_six_sites(self):
+        args = build_parser().parse_args(
+            ["--profile", "corridor", "--guarded-corridor", "1"]
+        )
+        with self.assertRaisesRegex(ValueError, "at least six"):
+            validate_profile(resolve_profile(args))
+
+    def test_guarded_corridor_command_records_spatial_contract(self):
+        command = build_simulation_command(
+            "./ns3",
+            "hsr_velocity_connect",
+            "repeater",
+            500.0,
+            0.0,
+            1,
+            1,
+            1,
+            Path("out/raw/guarded"),
+            num_gnbs=6,
+            gnb_lateral_offset_m=10.0,
+            gnb_spacing_m=500.0,
+            guarded_corridor=True,
+            channel_update_period_ms=5.0,
+        )
+        self.assertIn("--numGnbs=6", command[2])
+        self.assertIn("--guardedCorridor=1", command[2])
+        self.assertIn("--gnbLateralOffsetM=10", command[2])
+        self.assertIn("--channelUpdatePeriodMs=5", command[2])
+
+    def test_component_profile_rejects_net_passive_gain(self):
+        args = build_parser().parse_args(
+            [
+                "--profile", "corridor",
+                "--feeder-cable-loss-db", "0",
+                "--coupling-loss-db", "0",
+                "--indoor-distrib-loss-db", "0",
+                "--donor-gain-dbi", "8",
+                "--service-gain-dbi", "2",
+            ]
+        )
+        with self.assertRaisesRegex(ValueError, "net passive gain"):
+            validate_profile(resolve_profile(args))
+
+    def test_declared_scalar_profile_carries_only_explicit_loss_hypothesis(self):
+        args = build_parser().parse_args(
+            [
+                "--profile",
+                "corridor",
+                "--passive-model",
+                "declared_scalar",
+                "--declared-passive-loss-db",
+                "6.5",
+            ]
+        )
+        profile = resolve_profile(args)
+        validate_profile(profile)
+        self.assertEqual(profile["passive_model"], "declared_scalar")
+        self.assertEqual(profile["declared_passive_loss_db"], 6.5)
+        command = build_simulation_command(
+            "./ns3",
+            "hsr_velocity_connect",
+            "repeater",
+            500.0,
+            0.0,
+            1,
+            1,
+            1,
+            Path("out/raw/declared"),
+            passive_model=str(profile["passive_model"]),
+            declared_passive_loss_db=float(
+                profile["declared_passive_loss_db"]
+            ),
+        )
+        self.assertIn("--passiveModel=declared_scalar", command[2])
+        self.assertIn("--declaredPassiveLossDb=6.5", command[2])
 
     def test_paper_command_carries_reproducibility_parameters(self):
         command = build_simulation_command(
@@ -78,6 +237,9 @@ class CampaignHelpersTest(unittest.TestCase):
         self.assertAlmostEqual(summary["throughput_mbps_std"], math.sqrt(8.0))
         self.assertGreater(summary["throughput_mbps_ci95"], 0.0)
         self.assertEqual(summary["pdr_n"], 2)
+
+    def test_small_sample_ci_uses_student_t(self):
+        self.assertAlmostEqual(t_critical_95(2), 4.303)
 
     def test_paper_checkpoint_rejects_failed_scenario(self):
         rows = [

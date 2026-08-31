@@ -1,0 +1,88 @@
+{
+  "status": "captured_for_repaired_transaction_v3_pre_campaign",
+  "captured_utc": "2026-07-31T07:54:37.5845306Z",
+  "campaign_namespace": "transaction-v3-*",
+  "purpose": "Bind the repaired guarded declared-scalar campaign to the exact synced sources, ns-3 robustness patch, campaign driver, campaign contract, and built executable used after excluding the failed pre-patch 815/816 campaign.",
+  "dependency_revisions": {
+    "ns-3.48": "d2add90b452d600cfb4859baed8e9ea633519447",
+    "5G-LENA-v5.0": "47a3adc263f773556eaadac5a5341458dbc61c47"
+  },
+  "tracked_repository_state": {
+    "ns3_tracked_dirty_entry_count": 0,
+    "nr_tracked_dirty_entry_count": 0,
+    "note": "Generated outputs and velocity_connect_tools are intentionally untracked; every campaign-relevant untracked source is hashed below."
+  },
+  "build_environment": {
+    "distribution": "Ubuntu-22.04 under WSL",
+    "python": "3.10.12",
+    "cmake": "3.22.1",
+    "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0",
+    "ns3_build_profile": "default"
+  },
+  "wsl_root": "/home/codex/velocity-connect-ns3-v5",
+  "binary": {
+    "path": "build/scratch/velocity_connect/ns3.48-hsr_velocity_connect-default",
+    "packaged_copy": "environment/binaries/ns3.48-hsr_velocity_connect-default",
+    "bytes": 3735216,
+    "sha256": "1141752880eabb979bbcbb73eb33835a1160700b1cf146d611d55a4b0f1d30be"
+  },
+  "test_runner": {
+    "path": "build/utils/ns3.48-test-runner-default",
+    "bytes": 26493664,
+    "sha256": "63a42a88fb951268feb01d252b9c3348c7c4486e777b684df549a77efabf624b"
+  },
+  "ns3_local_patch": {
+    "path": "patches/ns-3.48-fqcodel-short-transport-header.patch",
+    "sha256": "027739864dcd1f60ab323197895b233cb211287ca5b416c71975679f8b4f8217",
+    "sync_guard_result": "PASS",
+    "unit_suite": "ipv4-queue-disc-short-transport-header",
+    "unit_suite_result": "PASS"
+  },
+  "exact_failed_seed_replay": {
+    "status": "PASS",
+    "output_wsl_path": "/home/codex/velocity-connect-ns3-v5/out/regression-bad-ipv4-length-20260731-v3",
+    "regression_result_sha256": "5aaddcb94d76cf1945ccde7373fc80f3cbd57efa749dbb1e733cfd03695ece07",
+    "bad_ipv4_length_drops": 0,
+    "short_transport_header_hash_events": 0,
+    "interpretation": "Completion evidence for the formerly failed seed; direct short-header guard evidence comes from the dedicated ns-3 unit test."
+  },
+  "synced_source_sha256": {
+    "scratch/velocity_connect/hsr_apps.h": "2256ba8b92f88303760968e52b0dc9fbc0195e901d51e67f63fbd24a38753175",
+    "scratch/velocity_connect/hsr_handover.h": "51673aa9a414092ca41e663df9df2e7fb14bdb1935a8b205f94b94f13815d524",
+    "scratch/velocity_connect/hsr_io.h": "e6c84606505412f48e67bd8d719bf6c72813d2d561ebb22fa68262c7f8eba765",
+    "scratch/velocity_connect/hsr_nr.h": "d7efd13e2b9e9142a6d810333414837a60dd9c6453f17ce98c1e3641a5c3b8e0",
+    "scratch/velocity_connect/hsr_runner.h": "7481f22996b1558c989b0aaa14960150c2bff63a80b8c20da802775d05b9d9a7",
+    "scratch/velocity_connect/hsr_stats.h": "ffc02065808c066d874821aea8aeaa8c0e30465bb0bc7c0c2295ea9c4121a367",
+    "scratch/velocity_connect/hsr_types.h": "85ff27fdf6ba00f2a8a1dee0fb5a45b50944fe61dc5e86cebf8eb870a07ec513",
+    "scratch/velocity_connect/hsr_velocity_connect.cc": "da70a6cb039eb2ec217cd234a6657f3607a4ad73c6239366373100dd6fa46b97",
+    "velocity_connect_tools/research_campaign.py": "905ec5f7f4d4b0e298b14df1353120afbd7a6581474eb85fc1d1a29bf45930da",
+    "velocity_connect_tools/run_transaction_campaigns_v7.sh": "ba3a72258860789a39632825237283679475dcbe938907bcc96a79e7ed507b0c"
+  },
+  "local_to_wsl_hash_match": true,
+  "completion_recheck": {
+    "status": "unchanged_after_campaign",
+    "completed_utc": "2026-08-01T06:12:39Z",
+    "accepted_campaign_ledgers": 30,
+    "accepted_run_count": 816,
+    "failed_rows": 0,
+    "validation_command": "MAX_PARALLEL=1 bash velocity_connect_tools/run_transaction_campaigns_v7.sh",
+    "validation_result": "All 30 transaction-v3 campaigns and 816 runs completed successfully.",
+    "initial_repaired_campaign_log": {
+      "path": "output/logs/transaction_v3_repaired_campaign_20260731T132941.log",
+      "sha256": "744840d9ff14061c411892d07470db18225106d7f80dacf1b665e0ddbe0a4f42",
+      "interpretation": "Abnormal wrapper stop after a subset of A3 runs; partial raw outputs are excluded and documented separately."
+    },
+    "resume_campaign_log": {
+      "path": "output/logs/transaction_v3_resume_20260801T101543.log",
+      "sha256": "82e7c5e6f724e2c1ffecfa397fa8abd1e0f9eca965b80d317e28ea1071432d12",
+      "exit_marker": "output/logs/transaction_v3_resume_20260801T101543.exit",
+      "exit_code": 0
+    },
+    "partial_archive": {
+      "wsl_path": "/home/codex/velocity-connect-ns3-v5/out/excluded_protocol_aborted_20260801T1012",
+      "single_run_csv_files": 51,
+      "interpretation": "Archived incomplete A3 raw outputs from an abnormal wrapper stop; not used as accepted evidence."
+    }
+  },
+  "evidence_boundary": "This binds software provenance only. It does not turn simulator output into measurement or validate the passive RF product."
+}

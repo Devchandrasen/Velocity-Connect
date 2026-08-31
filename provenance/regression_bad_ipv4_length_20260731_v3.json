@@ -1,0 +1,39 @@
+{
+  "status": "PASS",
+  "recorded_utc": "2026-07-31T07:54:37.5845306Z",
+  "purpose": "Portable record for the exact replay of the deterministic transaction-v3 FqCoDel failed seed after applying the ns-3 robustness patch.",
+  "simulator": {
+    "wsl_root": "/home/codex/velocity-connect-ns3-v5",
+    "ns3_revision": "d2add90b452d600cfb4859baed8e9ea633519447",
+    "nr_revision": "47a3adc263f773556eaadac5a5341458dbc61c47",
+    "hsr_binary_sha256": "1141752880eabb979bbcbb73eb33835a1160700b1cf146d611d55a4b0f1d30be",
+    "patch": "patches/ns-3.48-fqcodel-short-transport-header.patch",
+    "patch_sha256": "027739864dcd1f60ab323197895b233cb211287ca5b416c71975679f8b4f8217"
+  },
+  "unit_evidence": {
+    "suite": "ipv4-queue-disc-short-transport-header",
+    "result": "PASS",
+    "tests_passed": 1,
+    "tests_failed": 0,
+    "test_runner_sha256": "63a42a88fb951268feb01d252b9c3348c7c4486e777b684df549a77efabf624b",
+    "build_log": "output/logs/test_runner_build_20260731T131935.log",
+    "build_log_sha256": "44168fbbfa78a5f63549589c51a982e6b349909a244161774ad69be6df1bb984"
+  },
+  "exact_replay": {
+    "output_wsl_path": "/home/codex/velocity-connect-ns3-v5/out/regression-bad-ipv4-length-20260731-v3",
+    "regression_result_wsl_path": "/home/codex/velocity-connect-ns3-v5/out/regression-bad-ipv4-length-20260731-v3/regression_result.json",
+    "regression_result_sha256": "5aaddcb94d76cf1945ccde7373fc80f3cbd57efa749dbb1e733cfd03695ece07",
+    "wrapper_log": "output/logs/bad_length_regression_20260731T132127.log",
+    "wrapper_log_sha256": "64f98f8dbc7bc0e75e3c41c4c76aa2cfabc6ffe77366e6809d743f307de98596",
+    "seed": 301,
+    "run": 201003,
+    "scenario": "composite",
+    "traffic_direction": "uplink",
+    "speed_kmh": 500,
+    "num_gnbs": 6,
+    "num_ues": 4,
+    "bad_ipv4_length_drops": 0,
+    "short_transport_header_hash_events": 0
+  },
+  "interpretation": "The exact formerly failed seed now completes and records diagnostic counters. The replay counters were zero in the rebuilt run, so the replay is completion evidence; direct branch evidence for the short-transport-header guard is the dedicated ns-3 unit test. No archived row from the failed 815/816 campaign is admissible for manuscript statistics."
+}

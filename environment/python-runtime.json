@@ -1,0 +1,11 @@
+{
+  "supported_runtime": {
+    "implementation": "CPython",
+    "version": "3.12.10",
+    "architecture": "64bit",
+    "platform": "Windows"
+  },
+  "bootstrap_pip_version": "26.2",
+  "requirements": "environment/requirements-hashed-win-py312.txt",
+  "scope": "Exact clean-machine contract for the Windows analysis and manuscript-figure pipeline. The ns-3/5G-LENA simulator has a separate Ubuntu-22.04 provenance contract."
+}

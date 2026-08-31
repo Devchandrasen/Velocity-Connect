@@ -1,0 +1,77 @@
+{
+  "ns3": {
+    "version": "3.48",
+    "repository": "https://gitlab.com/nsnam/ns-3-dev.git",
+    "commit": "d2add90b452d600cfb4859baed8e9ea633519447"
+  },
+  "five_g_lena": {
+    "version": "5.0",
+    "repository": "https://gitlab.com/cttc-lena/nr.git",
+    "commit": "47a3adc263f773556eaadac5a5341458dbc61c47",
+    "destination": "contrib/nr"
+  },
+  "validated_host": "Ubuntu-22.04 under WSL2",
+  "validated_cmake": "3.22.1",
+  "validated_compiler": "g++ 11.4.0",
+  "validated_python": "3.10.12",
+  "cmake_minimum": "3.22.1",
+  "local_ns3_robustness_patch": {
+    "path": "patches/ns-3.48-fqcodel-short-transport-header.patch",
+    "sha256": "027739864dcd1f60ab323197895b233cb211287ca5b416c71975679f8b4f8217",
+    "status": "applied under Ubuntu-22.04 before repaired transaction-v3 evidence generation",
+    "scope": "Adds an IPv4 declared-payload length guard and a FqCoDel hash guard for short TCP/UDP transport headers; includes the ipv4-queue-disc-short-transport-header ns-3 unit suite.",
+    "validated_by": [
+      {
+        "kind": "sync_guard",
+        "command": "scripts/sync_wsl_ns3_v5.sh --check-only",
+        "result": "PASS"
+      },
+      {
+        "kind": "ns3_unit_test",
+        "suite": "ipv4-queue-disc-short-transport-header",
+        "result": "PASS"
+      },
+      {
+        "kind": "exact_failed_seed_replay",
+        "output_wsl_path": "/home/codex/velocity-connect-ns3-v5/out/regression-bad-ipv4-length-20260731-v3",
+        "result": "PASS",
+        "bad_ipv4_length_drops": 0,
+        "short_transport_header_hash_events": 0
+      }
+    ]
+  },
+  "known_issue_assessments": [
+    {
+      "component": "5G-LENA",
+      "affected_release": "5.0",
+      "upstream_fix_status": "listed under the 5.1 development release notes",
+      "upstream_reference": "https://cttc-lena.gitlab.io/nr/html/md__2builds_2cttc-lena_2nr_2_r_e_l_e_a_s_e___n_o_t_e_s.html",
+      "issue": "During handover, the UE MAC retained the source-cell RACH configuration instead of applying the target-cell configuration.",
+      "campaign_applicability": "inactive_under_homogeneous_configuration",
+      "evidence": {
+        "campaign_per_cell_rach_overrides": false,
+        "all_gnbs_share_nr_gnb_mac_defaults": true,
+        "number_of_ra_preambles": 52,
+        "preamble_trans_max": 50,
+        "ra_response_window_size": 3,
+        "conn_est_fail_count": 1
+      },
+      "interpretation": "The source and target values are identical for every handover in this campaign, so retaining the source values does not change the configured RACH timers or limits. This assessment does not validate heterogeneous-RACH handover."
+    },
+    {
+      "component": "ns-3 and 5G-LENA FDD interoperability",
+      "affected_release": "5G-LENA 5.0 with ns-3.48 before ns-3 merge request 2929",
+      "upstream_fix_status": "upstream patch recommended for FDD users; official notes state TDD users are unaffected",
+      "upstream_reference": "https://gitlab.com/nsnam/ns-3-dev/-/merge_requests/2929",
+      "issue": "An FDD NLOS condition-model interaction could reduce received power.",
+      "campaign_applicability": "not_applicable_tdd",
+      "evidence": {
+        "component_carriers": 1,
+        "bandwidth_parts": 1,
+        "gnb_phy_pattern": "F|F|F|F|F|F|F|F|F|F|",
+        "duplexing": "dynamic TDD"
+      },
+      "interpretation": "The campaign uses one all-flexible TDD BWP, not paired DL/UL FDD BWPs. The official v5.0 release note says TDD users are unaffected."
+    }
+  ]
+}

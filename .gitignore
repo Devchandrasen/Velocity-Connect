@@ -4,9 +4,64 @@ fig/
 *.png
 *.pdf
 *.csv
+!measurement_template.csv
+
+# Local research and submission artifacts are intentionally not part of the
+# implementation repository.
+/output/
+/tmp/
+/paper/
+/patent/
+/literature/
+/PAPER_REVISION_EXECUTION_PLAN.md
+/REVISION_BLUEPRINT.md
+/batch.log
+/texput.log
+/.gstack/
+
+# Hardware documents are local handoff artifacts.  The machine-readable VNA
+# analyzer is explicitly retained as implementation source.
+/hardware/*
+!/hardware/analyze_vna_touchstone.py
 
 # Python caches
 __pycache__/
 tmp/
 *.py[cod]
 .pytest_cache/
+.venv-hfss/
+.venv-reproduction/
+
+# AEDT-generated project data
+*.aedtresults/
+*.aedt.lock
+/hfss/results/
+/hfss/*.pyaedt/
+/hfss/*.log
+/hfss/*.prof
+/hfss/*.conv
+/hfss/*.mstat
+/hfss/*_manifest.json
+/hfss/*LITERATURE*.md
+/hfss/*HANDOFF*.md
+/hfss/export_n78_paper_evidence.py
+
+# Selected small native AEDT projects are staged explicitly.  Other local
+# exploration projects remain ignored unless deliberately force-added.
+/hfss/*.aedt
+
+# Local binaries and manuscript-packaging utilities are not source inputs for
+# the implementation CI contract.
+/environment/binaries/
+/scripts/generate_hfss_tree_manifest.py
+/scripts/reproduce_transaction_artifacts.ps1
+/scripts/resume_transaction_campaigns_v5.sh
+/scripts/run_publication_loss_sweep_v5.sh
+/scripts/run_publication_principal_v5.sh
+/scripts/run_transaction_campaigns_v5.sh
+/scripts/run_transaction_campaigns_v6.sh
+/scripts/verify_reproduced_artifacts.py
+/scripts/verify_transaction_package.py
+/tests/test_ptf_v5_robust_validation.py
+/tests/test_transaction_analysis.py
+/tests/test_transaction_package.py

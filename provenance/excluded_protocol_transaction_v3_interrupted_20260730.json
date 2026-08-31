@@ -1,0 +1,54 @@
+{
+  "status": "EXCLUDED_PROTOCOL",
+  "recorded_utc": "2026-07-31",
+  "campaign_namespace": "transaction-v3-*",
+  "reason": "The campaign controller was no longer running after an external task interruption. These six directories had no terminal campaign_runs.csv ledger. No simulator failure was recorded, but incomplete runs are not admissible evidence.",
+  "accepted_evidence_effect": "none",
+  "archive_wsl_path": "/home/codex/velocity-connect-ns3-v5/out/excluded_protocol/interrupted-20260730T160810",
+  "archive_tree": {
+    "file_count": 108,
+    "total_bytes": 1634217,
+    "tree_sha256": "606aaf35dfc46ec2f2e009c548fc2cb084b81029b9de014f65288ab2ec3e4c1b",
+    "tree_hash_algorithm": "For files sorted by forward-slash relative path, SHA-256 over UTF-8 records relative_path NUL byte_count NUL lowercase_file_sha256 newline."
+  },
+  "frozen_provenance": "environment/v3_campaign_source_provenance.json",
+  "pre_restart_integrity": {
+    "source_hash_mismatch_count": 0,
+    "binary_sha256": "b4974d4ff860c90171732b20c40f1ef4ab1b0cc1a1b665ea3b444efc60386adf",
+    "binary_hash_match": true,
+    "ns3_revision": "d2add90b452d600cfb4859baed8e9ea633519447",
+    "nr_revision": "47a3adc263f773556eaadac5a5341458dbc61c47"
+  },
+  "archived_directories": [
+    {
+      "name": "transaction-v3-param-uplink-isd300",
+      "raw_run_directories": 6,
+      "terminal_ledger_present": false
+    },
+    {
+      "name": "transaction-v3-param-uplink-isd500",
+      "raw_run_directories": 4,
+      "terminal_ledger_present": false
+    },
+    {
+      "name": "transaction-v3-param-uplink-isd800",
+      "raw_run_directories": 2,
+      "terminal_ledger_present": false
+    },
+    {
+      "name": "transaction-v3-recovery-param-downlink-isd300",
+      "raw_run_directories": 5,
+      "terminal_ledger_present": false
+    },
+    {
+      "name": "transaction-v3-recovery-param-downlink-isd500",
+      "raw_run_directories": 3,
+      "terminal_ledger_present": false
+    },
+    {
+      "name": "transaction-v3-recovery-param-downlink-isd800",
+      "raw_run_directories": 2,
+      "terminal_ledger_present": false
+    }
+  ]
+}

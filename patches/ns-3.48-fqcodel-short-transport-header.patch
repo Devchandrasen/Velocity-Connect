@@ -1,0 +1,198 @@
+diff --git a/src/internet/CMakeLists.txt b/src/internet/CMakeLists.txt
+index d1cf79a43..66268443c 100644
+--- a/src/internet/CMakeLists.txt
++++ b/src/internet/CMakeLists.txt
+@@ -236,6 +236,7 @@ set(test_sources
+     test/ipv4-list-routing-test-suite.cc
+     test/ipv4-packet-info-tag-test-suite.cc
+     test/ipv4-raw-test.cc
++    test/ipv4-queue-disc-item-test-suite.cc
+     test/ipv4-rip-test.cc
+     test/ipv4-static-routing-test-suite.cc
+     test/ipv4-test.cc
+diff --git a/src/internet/model/ipv4-l3-protocol.cc b/src/internet/model/ipv4-l3-protocol.cc
+index 9601e541a..8c4e0d167 100644
+--- a/src/internet/model/ipv4-l3-protocol.cc
++++ b/src/internet/model/ipv4-l3-protocol.cc
+@@ -590,6 +590,14 @@ Ipv4L3Protocol::Receive(Ptr<NetDevice> device,
+     }
+     packet->RemoveHeader(ipHeader);
+ 
++    // Reject truncated IPv4 payloads before upper-layer parsing or queueing.
++    if (ipHeader.GetPayloadSize() > packet->GetSize())
++    {
++        NS_LOG_LOGIC("Dropping received packet -- IPv4 payload is truncated");
++        m_dropTrace(ipHeader, packet, DROP_BAD_LENGTH, this, interface);
++        return;
++    }
++
+     // Trim any residual frame padding from underlying devices
+     if (ipHeader.GetPayloadSize() < packet->GetSize())
+     {
+diff --git a/src/internet/model/ipv4-l3-protocol.h b/src/internet/model/ipv4-l3-protocol.h
+index 26e1fb2ea..64f920771 100644
+--- a/src/internet/model/ipv4-l3-protocol.h
++++ b/src/internet/model/ipv4-l3-protocol.h
+@@ -99,7 +99,8 @@ class Ipv4L3Protocol : public Ipv4
+         DROP_INTERFACE_DOWN,   /**< Interface is down so can not send packet */
+         DROP_ROUTE_ERROR,      /**< Route error */
+         DROP_FRAGMENT_TIMEOUT, /**< Fragment timeout exceeded */
+-        DROP_DUPLICATE         /**< Duplicate packet received */
++        DROP_DUPLICATE,        /**< Duplicate packet received */
++        DROP_BAD_LENGTH        /**< IPv4 payload shorter than the declared payload size */
+     };
+ 
+     /**
+diff --git a/src/internet/model/ipv4-queue-disc-item.cc b/src/internet/model/ipv4-queue-disc-item.cc
+index 8887e82ad..ed74f7e2c 100644
+--- a/src/internet/model/ipv4-queue-disc-item.cc
++++ b/src/internet/model/ipv4-queue-disc-item.cc
+@@ -14,6 +14,23 @@ namespace ns3
+ 
+ NS_LOG_COMPONENT_DEFINE("Ipv4QueueDiscItem");
+ 
++namespace
++{
++uint64_t g_shortTransportHeaderHashEvents{0};
++}
++
++void
++ResetIpv4QueueDiscShortTransportHeaderHashEvents()
++{
++    g_shortTransportHeaderHashEvents = 0;
++}
++
++uint64_t
++GetIpv4QueueDiscShortTransportHeaderHashEvents()
++{
++    return g_shortTransportHeaderHashEvents;
++}
++
+ Ipv4QueueDiscItem::Ipv4QueueDiscItem(Ptr<Packet> p,
+                                      const Address& addr,
+                                      uint16_t protocol,
+@@ -112,19 +129,29 @@ Ipv4QueueDiscItem::Hash(uint32_t perturbation) const
+     UdpHeader udpHdr;
+     uint16_t srcPort = 0;
+     uint16_t destPort = 0;
++    const uint32_t packetSize = GetPacket()->GetSize();
+ 
+-    if (prot == 6 && fragOffset == 0) // TCP
++    if (prot == 6 && fragOffset == 0 &&
++        packetSize >= tcpHdr.GetSerializedSize()) // TCP
+     {
+         GetPacket()->PeekHeader(tcpHdr);
+         srcPort = tcpHdr.GetSourcePort();
+         destPort = tcpHdr.GetDestinationPort();
+     }
+-    else if (prot == 17 && fragOffset == 0) // UDP
++    else if (prot == 17 && fragOffset == 0 &&
++             packetSize >= udpHdr.GetSerializedSize()) // UDP
+     {
+         GetPacket()->PeekHeader(udpHdr);
+         srcPort = udpHdr.GetSourcePort();
+         destPort = udpHdr.GetDestinationPort();
+     }
++    else if ((prot == 6 || prot == 17) && fragOffset == 0)
++    {
++        ++g_shortTransportHeaderHashEvents;
++        NS_LOG_WARN("Transport header is truncated; hashing without port numbers"
++                    << " protocol=" << static_cast<uint16_t>(prot)
++                    << " packetSize=" << packetSize);
++    }
+     if (prot != 6 && prot != 17)
+     {
+         NS_LOG_WARN("Unknown transport protocol, no port number included in hash computation");
+diff --git a/src/internet/model/ipv4-queue-disc-item.h b/src/internet/model/ipv4-queue-disc-item.h
+index d942107a6..375855b41 100644
+--- a/src/internet/model/ipv4-queue-disc-item.h
++++ b/src/internet/model/ipv4-queue-disc-item.h
+@@ -13,6 +13,18 @@
+ namespace ns3
+ {
+ 
++/**
++ * Reset the process-local count of short TCP/UDP headers encountered while
++ * hashing IPv4 queue-disc items. This instrumentation is deterministic in the
++ * single-threaded simulator and is used by the Velocity Connect regression gate.
++ */
++void ResetIpv4QueueDiscShortTransportHeaderHashEvents();
++
++/**
++ * @return process-local count of short TCP/UDP headers seen by Hash().
++ */
++uint64_t GetIpv4QueueDiscShortTransportHeaderHashEvents();
++
+ /**
+  * @ingroup ipv4
+  * @ingroup traffic-control
+diff --git a/src/internet/test/ipv4-queue-disc-item-test-suite.cc b/src/internet/test/ipv4-queue-disc-item-test-suite.cc
+new file mode 100644
+index 000000000..a31de9c11
+--- /dev/null
++++ b/src/internet/test/ipv4-queue-disc-item-test-suite.cc
+@@ -0,0 +1,64 @@
++/*
++ * SPDX-License-Identifier: GPL-2.0-only
++ */
++
++#include "ns3/ipv4-queue-disc-item.h"
++#include "ns3/packet.h"
++#include "ns3/test.h"
++
++using namespace ns3;
++
++namespace
++{
++
++class Ipv4QueueDiscShortTransportHeaderTestCase : public TestCase
++{
++  public:
++    Ipv4QueueDiscShortTransportHeaderTestCase()
++        : TestCase("Hash short TCP and UDP payloads without reading beyond the packet")
++    {
++    }
++
++  private:
++    void DoRun() override
++    {
++        ResetIpv4QueueDiscShortTransportHeaderHashEvents();
++
++        Ipv4Header udpHeader;
++        udpHeader.SetSource(Ipv4Address("10.0.0.1"));
++        udpHeader.SetDestination(Ipv4Address("10.0.0.2"));
++        udpHeader.SetProtocol(17);
++        udpHeader.SetPayloadSize(1032);
++        Ptr<Ipv4QueueDiscItem> udpItem =
++            Create<Ipv4QueueDiscItem>(Create<Packet>(7), Address(), 0x0800, udpHeader);
++        (void)udpItem->Hash(0);
++
++        Ipv4Header tcpHeader;
++        tcpHeader.SetSource(Ipv4Address("10.0.0.3"));
++        tcpHeader.SetDestination(Ipv4Address("10.0.0.4"));
++        tcpHeader.SetProtocol(6);
++        tcpHeader.SetPayloadSize(1032);
++        Ptr<Ipv4QueueDiscItem> tcpItem =
++            Create<Ipv4QueueDiscItem>(Create<Packet>(19), Address(), 0x0800, tcpHeader);
++        (void)tcpItem->Hash(0);
++
++        NS_TEST_ASSERT_MSG_EQ(
++            GetIpv4QueueDiscShortTransportHeaderHashEvents(),
++            2,
++            "Both short transport headers must be counted");
++    }
++};
++
++class Ipv4QueueDiscItemTestSuite : public TestSuite
++{
++  public:
++    Ipv4QueueDiscItemTestSuite()
++        : TestSuite("ipv4-queue-disc-short-transport-header", Type::UNIT)
++    {
++        AddTestCase(new Ipv4QueueDiscShortTransportHeaderTestCase(), Duration::QUICK);
++    }
++};
++
++static Ipv4QueueDiscItemTestSuite g_ipv4QueueDiscItemTestSuite;
++
++} // namespace

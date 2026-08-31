@@ -1,0 +1,27 @@
+name: implementation-ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  cpu-validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: environment/requirements-lock.txt
+      - name: Install locked analysis dependencies
+        run: python -m pip install -r environment/requirements-lock.txt
+      - name: Verify byte-level implementation manifest
+        run: python scripts/verify_source_manifest.py
+      - name: Run implementation tests
+        run: python -m pytest -q

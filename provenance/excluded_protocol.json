@@ -1,0 +1,42 @@
+{
+  "status": "declared",
+  "policy": "No failed, interrupted, smoke-only, legacy-boundary-confounded, or partial run may enter manuscript statistics.",
+  "excluded": [
+    {
+      "namespace": "transaction-v1-*",
+      "reason": "Prior 816-run evidence used a five-site fixed-duration corridor whose fastest 300 m-ISD case moved beyond the final gNB. It is retained for audit but excluded from the boundary-controlled manuscript inference."
+    },
+    {
+      "namespace": "transaction-v2-smoke-p0",
+      "reason": "Failed pre-campaign smoke: UpdatePeriod was incorrectly applied to AlwaysLosChannelConditionModel. Code was corrected before the accepted campaign."
+    },
+    {
+      "namespace": "transaction-v2-smoke-p1",
+      "reason": "Successful one-run build/trace smoke only; seed and run are outside the accepted statistical contract."
+    },
+    {
+      "namespace": "transaction-v2-*",
+      "reason": "Campaign stopped and preserved after hostile RF review found that its component budget subtracted preliminary HFSS absolute gain from a solve that fails strict accepted-to-radiated-power closure. Partial or completed v2 directories are excluded; the replacement v3 campaign uses only predeclared total scalar losses."
+    },
+    {
+      "namespace": "transaction-v2-srs-smoke-ue16",
+      "reason": "Failed scalability smoke with SRS enabled. 5G-LENA terminated with 'Cannot RX SRS while receiving DATA' at 16-UE uplink load. The accepted campaign records SRS disabled and discloses this simulator limitation."
+    },
+    {
+      "namespace": "transaction-v3-smoke-p0",
+      "reason": "Successful one-run declared-scalar build and trace smoke only; seed and run are outside the accepted 816-run statistical contract."
+    },
+    {
+      "namespace": "transaction-v3 parametric partial directories archived at out/excluded_protocol/interrupted-20260730T160810",
+      "reason": "The first v3 campaign controller stopped after an external task interruption. Six parametric directories contained 22 raw run directories but no terminal campaign_runs.csv ledger. They are preserved under EXCLUDED_PROTOCOL and are not resumed, merged, or used in statistics; a hash-identical clean restart replaces them."
+    },
+    {
+      "namespace": "transaction-v3 full 816-row failed campaign archived at out/excluded_protocol/failed-fqcodel-20260731T121537",
+      "reason": "The frozen campaign produced 815 successful rows and one deterministic ns-3 FqCoDel short-UDP-header assertion. Exact replay reproduced the same failure. All 30 campaign directories are preserved under EXCLUDED_PROTOCOL; no successful row is cherry-picked into the repaired campaign. The post-patch unit suite and exact failed-seed replay passed, but manuscript statistics require a fresh 816-row repaired transaction-v3 campaign."
+    },
+    {
+      "namespace": "transaction-v3 repaired A3 partial raw archive at out/excluded_protocol_aborted_20260801T1012",
+      "reason": "The first repaired controller log ended without a terminal exit marker after producing partial A3 raw run folders for six tuning campaigns. Those folders were moved to a separate excluded-protocol archive and are not resumed, merged, or used in any manuscript statistic. The accepted evidence is the later resume/validation contract with 30 complete campaign_runs.csv ledgers, 816/816 ok rows, and zero failed rows."
+    }
+  ]
+}

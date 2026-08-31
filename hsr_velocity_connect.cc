@@ -37,19 +37,39 @@ int main(int argc, char* argv[])
   bool doScalability = true;
   bool singleRun = false;
   std::string scenarioName{"repeater"};
+  std::string passiveModelName{"component_budget"};
+  std::string trafficDirectionName{"downlink"};
 
   CommandLine cmd;
   cmd.AddValue("outDir", "Output directory", cfg.outDir);
   cmd.AddValue("simTime", "Simulation time (s)", cfg.simTimeS);
   cmd.AddValue("appStart", "Application start time (s)", cfg.appStartS);
+  cmd.AddValue(
+    "appStop",
+    "Application stop time (s); non-positive means simulator stop",
+    cfg.appStopS);
+  cmd.AddValue(
+    "channelUpdatePeriodMs",
+    "3GPP spatial-consistency update period (ms); zero disables updates",
+    cfg.channelUpdatePeriodMs);
 
   cmd.AddValue("seed", "RNG seed", cfg.seed);
   cmd.AddValue("run", "RNG run base", cfg.run);
 
   cmd.AddValue("distance", "Distance (m) used for speed sweep", cfg.distanceM);
   cmd.AddValue("speed", "Speed (km/h) used for distance sweep", cfg.speedKmph);
+  cmd.AddValue("gnbHeightM", "gNB antenna height (m)", cfg.gnbHeight);
+  cmd.AddValue(
+    "gnbLateralOffsetM",
+    "Absolute track-to-gNB lateral offset (m)",
+    cfg.gnbLateralOffsetM);
+  cmd.AddValue("ueHeightM", "UE antenna height (m)", cfg.ueHeight);
   cmd.AddValue("numUes", "Number of UEs for a single run", cfg.numUes);
   cmd.AddValue("scenario", "Scenario: metal, composite, or repeater", scenarioName);
+  cmd.AddValue(
+    "passiveModel",
+    "Passive abstraction: component_budget or legacy_scalar",
+    passiveModelName);
   cmd.AddValue("singleRun", "Run one parameterized configuration and write single_run.csv", singleRun);
 
   cmd.AddValue("nrScenario", "NR scenario string (UMi/RMa/UMa/etc.)", cfg.nrScenario);
@@ -59,22 +79,52 @@ int main(int argc, char* argv[])
   cmd.AddValue("scheduler", "Scheduler TypeId string", cfg.schedulerType);
   cmd.AddValue("numerology", "NR numerology (0-5; 1 means 30 kHz SCS)", cfg.numerology);
 
-  // ✅ Scalability crash fix: SRS disabled by default for DL-focused study
-  cmd.AddValue("enableSrs", "Enable SRS scheduling (0/1). Default 0.", cfg.enableSrs);
+  cmd.AddValue(
+    "enableSrs",
+    "Enable SRS scheduling (0/1); the selected mode is recorded in results.",
+    cfg.enableSrs);
 
   cmd.AddValue("gnbTxPowerDbm", "gNB Tx power (dBm)", cfg.gnbTxPowerDbm);
+  cmd.AddValue("ueTxPowerDbm", "UE Tx power (dBm)", cfg.ueTxPowerDbm);
   cmd.AddValue("ueNoiseFigureDb", "UE noise figure (dB)", cfg.ueNoiseFigureDb);
 
   cmd.AddValue("saturatingLoad", "Use saturating traffic (0/1)", cfg.saturatingLoad);
+  cmd.AddValue(
+    "trafficDirection",
+    "Application traffic direction: downlink/dl or uplink/ul",
+    trafficDirectionName);
   cmd.AddValue("appPktSize", "Application packet size in bytes", cfg.appPktSizeBytes);
   cmd.AddValue("perUeOfferedMbps", "Per-UE offered load (Mbps) if not saturating", cfg.perUeOfferedMbps);
   cmd.AddValue("saturatingIntervalUs", "Saturating inter-packet interval (us)", cfg.saturatingIntervalUs);
 
   cmd.AddValue("verbose", "Print effective-loss breakdown (0/1)", cfg.verbose);
 
+  cmd.AddValue("numGnbs", "Number of gNBs along the corridor", cfg.numGnbs);
+  cmd.AddValue("gnbSpacingM", "Along-track gNB spacing in metres", cfg.gnbSpacingM);
+  cmd.AddValue(
+    "guardedCorridor",
+    "Use the spatially matched interior measurement window (0/1)",
+    cfg.guardedCorridor);
+  cmd.AddValue("enableHandover", "Enable A3-RSRP X2 handover (0/1)", cfg.enableHandover);
+  cmd.AddValue(
+    "handoverHysteresisDb", "A3 handover hysteresis (dB)", cfg.handoverHysteresisDb);
+  cmd.AddValue(
+    "handoverTimeToTriggerMs",
+    "A3 handover time-to-trigger (ms)",
+    cfg.handoverTimeToTriggerMs);
+  cmd.AddValue("useIdealRrc", "Use ideal RRC signalling (0/1)", cfg.useIdealRrc);
+
   // Baseline VPL
   cmd.AddValue("metalVplDb", "Metal coach VPL (dB)", cfg.metalVplDb);
   cmd.AddValue("compositeVplDb", "Composite coach VPL (dB)", cfg.compositeVplDb);
+  cmd.AddValue(
+    "legacyRepeaterLossDb",
+    "Fixed repeater loss used only by legacy_scalar mode (dB)",
+    cfg.legacyRepeaterLossDb);
+  cmd.AddValue(
+    "declaredPassiveLossDb",
+    "Predeclared end-to-end loss used only by declared_scalar mode (dB)",
+    cfg.declaredPassiveLossDb);
 
   // Velocity Connect link budget terms (your novel modelling idea)
   cmd.AddValue("donorGainDbi", "Donor antenna gain (dBi)", cfg.donorGainDbi);
@@ -94,6 +144,32 @@ int main(int argc, char* argv[])
   {
     std::cerr << "Invalid numerology " << cfg.numerology
               << ". Expected a value from 0 to 5." << std::endl;
+    return 2;
+  }
+
+  if (!TryParsePassiveModel(passiveModelName, cfg.passiveModel))
+  {
+    std::cerr << "Unknown passive model '" << passiveModelName
+              << "'. Expected component_budget, declared_scalar, or "
+              << "legacy_scalar." << std::endl;
+    return 2;
+  }
+
+  if (!TryParseTrafficDirection(trafficDirectionName, cfg.trafficDirection))
+  {
+    std::cerr << "Unknown traffic direction '" << trafficDirectionName
+              << "'. Expected downlink/dl or uplink/ul." << std::endl;
+    return 2;
+  }
+
+  try
+  {
+    ApplyGuardedCorridorWindow(cfg);
+    ValidateRunConfig(cfg);
+  }
+  catch (const std::invalid_argument& error)
+  {
+    std::cerr << "Invalid configuration: " << error.what() << std::endl;
     return 2;
   }
 

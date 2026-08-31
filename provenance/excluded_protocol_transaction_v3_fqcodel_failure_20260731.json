@@ -1,0 +1,94 @@
+{
+  "status": "EXCLUDED_PROTOCOL",
+  "recorded_utc": "2026-07-31T06:45:37.4501828Z",
+  "campaign_namespace": "transaction-v3-*",
+  "reason": "The frozen 816-run campaign terminated with 815 successful runs and one deterministic simulator failure. The failing uplink/composite 4-UE seed-301 run reached an ns-3 FqCoDel five-tuple hash with a seven-byte packet while the detached IPv4 header declared a 1032-byte UDP payload. Ipv4QueueDiscItem::Hash attempted to deserialize an eight-byte UDP header and aborted in Buffer::Iterator::PeekU8. Exact replay failed at the same simulation time. No row from this campaign is admissible evidence.",
+  "accepted_evidence_effect": "none",
+  "archive_wsl_path": "/home/codex/velocity-connect-ns3-v5/out/excluded_protocol/failed-fqcodel-20260731T121537",
+  "archive_tree": {
+    "file_count": 4981,
+    "total_bytes": 85704975,
+    "tree_sha256": "9b80ed148042264d02445913278b06491ed8dc834b80c1a82cae8a391b806954",
+    "tree_hash_algorithm": "For files sorted by forward-slash relative path, SHA-256 over UTF-8 records relative_path NUL byte_count NUL lowercase_file_sha256 newline."
+  },
+  "campaign_contract": {
+    "campaign_directories": 30,
+    "terminal_rows": 816,
+    "successful_rows": 815,
+    "failed_rows": 1,
+    "unique_seed_run_pairs": 816,
+    "raw_run_directories": 816,
+    "controller_success_line_present": false,
+    "controller_stderr_bytes": 45
+  },
+  "failed_run": {
+    "campaign": "transaction-v3-load-uplink-composite",
+    "run_id": "run_0004_composite_500kmh_0m_n4_seed301",
+    "scenario": "composite",
+    "traffic_direction": "uplink",
+    "num_ues": 4,
+    "seed": 301,
+    "run": 201003,
+    "return_code": 250,
+    "failure_time_s": 6.437064484,
+    "assertion_file": "src/network/model/buffer.h",
+    "assertion_line": 1024
+  },
+  "deterministic_diagnosis": {
+    "replay_exit_code": 134,
+    "replay_failure_time_s": 6.437064484,
+    "backtrace_path": "output/diagnostic-gdb3-uplink-composite-n4-seed301.log",
+    "backtrace_sha256": "5c89e112e77dc57e784fc80e942d1177ae07509c5ee5402d8ea9d698430d5aac",
+    "queue_path": "Ipv4QueueDiscItem::Hash -> FqCoDelQueueDisc::DoEnqueue",
+    "observed_packet_buffer_bytes": 7,
+    "ipv4_fragment_offset": 0,
+    "ipv4_protocol": 17,
+    "ipv4_declared_payload_bytes": 1032,
+    "ipv4_identification": 3,
+    "ipv4_flags": 0,
+    "interpretation": "This is an upstream queue-disc robustness failure exposed by a truncated packet. It is not a failure of the custom SeqTsNanoHeader. A successful-only retry would be selective and is forbidden."
+  },
+  "frozen_provenance": "environment/v3_campaign_source_provenance.json",
+  "pre_patch_integrity": {
+    "binary_sha256": "b4974d4ff860c90171732b20c40f1ef4ab1b0cc1a1b665ea3b444efc60386adf",
+    "ns3_revision": "d2add90b452d600cfb4859baed8e9ea633519447",
+    "nr_revision": "47a3adc263f773556eaadac5a5341458dbc61c47",
+    "controller_stdout_sha256": "ee32a6809116eb20a8c6189aedac494724738fc4919e3da267f784ca97374b25",
+    "controller_stderr_sha256": "c5fa5e35edf7531004c19591e9d815f5816daac68871327bb3b07ef0dd48d1ed"
+  },
+  "corrective_action": {
+    "patch": "patches/ns-3.48-fqcodel-short-transport-header.patch",
+    "patch_sha256": "027739864dcd1f60ab323197895b233cb211287ca5b416c71975679f8b4f8217",
+    "rule": "Apply the IPv4 declared-length drop and FqCoDel short-transport-header hash guard, rebuild, prove the synthetic short-header guard with an ns-3 unit test, prove the exact failed seed completes, then rerun the full 30-campaign/816-run contract in a clean namespace. Do not merge any archived row into the repaired campaign."
+  },
+  "post_patch_validation": {
+    "validated_utc": "2026-07-31T07:54:37.5845306Z",
+    "sync_guard": {
+      "command": "scripts/sync_wsl_ns3_v5.sh --check-only under Ubuntu-22.04",
+      "ns3_revision": "d2add90b452d600cfb4859baed8e9ea633519447",
+      "nr_revision": "47a3adc263f773556eaadac5a5341458dbc61c47",
+      "patch_sha256": "027739864dcd1f60ab323197895b233cb211287ca5b416c71975679f8b4f8217",
+      "patch_status": "applied"
+    },
+    "unit_test": {
+      "suite": "ipv4-queue-disc-short-transport-header",
+      "result": "PASS",
+      "tests_passed": 1,
+      "tests_failed": 0,
+      "build_log": "output/logs/test_runner_build_20260731T131935.log",
+      "build_log_sha256": "44168fbbfa78a5f63549589c51a982e6b349909a244161774ad69be6df1bb984",
+      "test_runner_sha256": "63a42a88fb951268feb01d252b9c3348c7c4486e777b684df549a77efabf624b"
+    },
+    "exact_failed_seed_replay": {
+      "result": "PASS",
+      "output_wsl_path": "/home/codex/velocity-connect-ns3-v5/out/regression-bad-ipv4-length-20260731-v3",
+      "result_json_sha256": "5aaddcb94d76cf1945ccde7373fc80f3cbd57efa749dbb1e733cfd03695ece07",
+      "log": "output/logs/bad_length_regression_20260731T132127.log",
+      "log_sha256": "64f98f8dbc7bc0e75e3c41c4c76aa2cfabc6ffe77366e6809d743f307de98596",
+      "bad_ipv4_length_drops": 0,
+      "short_transport_header_hash_events": 0,
+      "interpretation": "The exact formerly failed seed now completes and records diagnostic counters. The counter values are observed as zero in the rebuilt replay, so this replay is completion evidence, while the dedicated unit test is the direct branch-coverage evidence for the short-header guard."
+    },
+    "repaired_campaign_rule": "Only a fresh post-patch transaction-v3 namespace with all 816 accepted rows may enter manuscript statistics."
+  }
+}

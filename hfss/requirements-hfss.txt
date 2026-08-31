@@ -1,0 +1,3 @@
+pyaedt==1.3.0
+ansys-aedt-toolkits-antenna==0.9.1
+scikit-rf==2.0.1
