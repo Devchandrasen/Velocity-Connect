@@ -38,39 +38,56 @@ is now met locally.
 
 ## Phase 2 — real mobility and handover model
 
-The current model has one gNB and `AttachToClosestGnb`; it does not yet measure a real handover. Upgrade it to two or more gNBs along the track:
+Implemented on 2026-07-24 as an advanced corridor path while retaining the
+single-cell paper baseline:
 
-1. Place adjacent cells along the railway corridor.
-2. Attach UEs and enable an NR handover algorithm.
-3. Log handover request, execution, interruption duration, serving-cell changes, and failed handovers.
-4. Compare metal, composite, and repeater cases at the same mobility traces.
+1. Adjacent cells are placed along the railway corridor.
+2. UEs begin on cell 0 and use A3-RSRP X2 handover.
+3. The simulator logs start/end/error, protocol duration, application packet
+   gap, serving-cell changes, and RSRP measurement reports.
+4. `run_corridor_campaign.py` compares coach scenarios on identical traces.
 
-Acceptance gate: every handover event is attributable to a UE, source cell, target cell, timestamp, and seed; throughput/PDR/latency are reported both overall and during handover windows.
+The strict 500 km/h, three-gNB, one-UE checkpoint completed seeds 21, 22, and
+23 with two successful handovers per seed and no failures. This is a bounded
+protocol-event gate under ideal RRC, not publication-level or field evidence.
+
+Protocol-event acceptance is met: every handover is attributable to a UE,
+source cell, target cell, timestamp, and seed, and every run has serving-cell
+and neighbour-RSRP evidence. Per-window throughput/PDR/latency remain a
+publication-matrix item; the current event metric is application packet gap.
 
 ## Phase 3 — stronger Velocity Connect physical model
 
-Replace the current equivalent gNB transmit-power reduction with an explicit two-segment link budget:
+The first component-budget gate is implemented:
 
-1. Model donor antenna, feeder/coupler, in-coach distribution, and service antenna as named components.
-2. Preserve the simple effective-loss mode as a controlled baseline.
-3. Add sensitivity sweeps for each component and bounded uncertainty distributions.
-4. Report when the relay improves coverage versus when it only improves in-coach penetration.
+1. Donor gain, feeder loss, feedthrough/coupling loss, indoor loss, and service
+   gain are named and persisted.
+2. `legacy_scalar` is preserved only as the rejected-paper baseline.
+3. Invalid component budgets fail instead of being silently clamped.
+4. `calibrate_passive_model.py` converts measured VNA/OTA rows to simulator
+   parameters without synthetic fallback.
+
+Remaining: calibrated measurements, uncertainty sweeps, and a higher-fidelity
+two-segment propagation implementation beyond the current equivalent
+system-level application.
 
 Acceptance gate: the model passes component-level conservation checks, never produces negative loss or impossible gain, and conclusions remain stable across repeated seeds and the declared uncertainty range.
 
 ## Phase 4 — research-grade evidence package
 
-1. Run at least three seeds for smoke validation and a declared larger seed set for paper results.
-2. Generate summary tables with mean, sample standard deviation, 95% confidence interval, and number of valid observations.
+1. The three-seed protocol gate is complete; run the declared 20-seed
+   principal matrix only after hardware calibration.
+2. Summary tables now report mean, sample standard deviation, two-sided 95%
+   Student-t interval, and number of valid observations.
 3. Add a machine-readable manifest containing source revisions, NS-3/NR revisions, compiler, configuration, and command line.
 4. Remove or label all synthetic/hand-entered plotting fallbacks.
 5. Publish only claims supported by completed terminal runs and retained raw CSVs.
 
 ## Recommended next implementation
 
-Implement Phase 2 as the next substantive research advancement: real multi-cell
-mobility and handover interruption metrics are the clearest gap between the
-current framework and an advanced HSR connectivity study. The impact path is:
-reproducible parity -> field-calibrated passive link budget -> multi-cell
-handover robustness -> mixed passenger traffic and uplink -> coach-level pilot
-validation.
+Run the VNA/OTA calibration gate with the hardware expert, then replace the
+equivalent Tx-power abstraction with explicit outdoor-donor and
+service-antenna-to-seat propagation segments. After that, execute the declared
+mixed-load, uplink/downlink, multi-seed matrix and only then begin a parked-coach
+pilot. The impact path is: reproducible parity -> measured component budget ->
+two-segment propagation -> multi-cell robustness -> coach-level pilot.

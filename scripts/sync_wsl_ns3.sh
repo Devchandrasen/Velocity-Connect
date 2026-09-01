@@ -3,8 +3,12 @@ set -euo pipefail
 
 readonly EXPECTED_NR_REVISION="f29ebd33450c49af934ea5dde8606f855c22c2a6"
 readonly EXPECTED_PATCHED_SOURCE_SHA256="83052d7876cceb8fee876f7abf8820e67164faa432c23aa822a488b251c1a6f9"
+readonly EXPECTED_PATCHED_HANDOVER_SHA256="9efa1a333d702ddfa1a95a9c7cb78e484306a06d76fb7fc457648785c75daf99"
+readonly EXPECTED_PATCHED_GNB_DEVICE_CC_SHA256="74c29b65f1b0b5a25d47cb8f165b3148d5007d6c8450c40f5d7f755eaa0e2237"
+readonly EXPECTED_PATCHED_GNB_DEVICE_H_SHA256="ce84243fcccc79d07d44696dd1d888d9052ff4acfbd91fa1bd201aed3b35df7e"
 readonly UPSTREAM_BEAM_FIX_REVISION="81892efac84f2aef0a962b9da176ea7d7b6912b0"
 readonly UPSTREAM_BUDGET_FIX_REVISION="a1aa32c757e0f834a4e40654853ce56dee13eca3"
+readonly UPSTREAM_HANDOVER_WIRING_REVISION="7706af4421e0405a11320aaa70b783547542cef4"
 
 usage() {
     cat <<'EOF'
@@ -59,9 +63,19 @@ project_root="${2:-$(cd "$script_dir/.." && pwd)}"
 nr_root="$ns3_root/contrib/nr"
 patch_file="$project_root/patches/5g-lena-v4.1.1-harq-symbol-budget.patch"
 beam_patch_file="$project_root/patches/5g-lena-v4.1.1-harq-beam-order.patch"
+handover_patch_file="$project_root/patches/5g-lena-v4.1.1-handover-wiring.patch"
+handover_lifetime_patch_file="$project_root/patches/5g-lena-v4.1.1-handover-lifetime.patch"
 scratch_dir="$ns3_root/scratch/velocity_connect"
-patch_files=("$beam_patch_file" "$patch_file")
+patch_files=(
+    "$beam_patch_file"
+    "$patch_file"
+    "$handover_patch_file"
+    "$handover_lifetime_patch_file"
+)
 patched_source="$nr_root/model/nr-mac-scheduler-harq-rr.cc"
+patched_handover_source="$nr_root/helper/nr-helper.cc"
+patched_gnb_device_cc="$nr_root/model/nr-gnb-net-device.cc"
+patched_gnb_device_h="$nr_root/model/nr-gnb-net-device.h"
 
 for required in \
     "$ns3_root/ns3" \
@@ -82,11 +96,16 @@ if [[ "$actual_revision" != "$EXPECTED_NR_REVISION" ]]; then
     echo "Expected clean v4.1.1 revision: $EXPECTED_NR_REVISION" >&2
     echo "Upstream beam fix: $UPSTREAM_BEAM_FIX_REVISION" >&2
     echo "Upstream symbol-budget fix: $UPSTREAM_BUDGET_FIX_REVISION" >&2
+    echo "Upstream handover wiring reference: $UPSTREAM_HANDOVER_WIRING_REVISION" >&2
     exit 1
 fi
 
 changed_files="$("${git_nr[@]}" status --porcelain --untracked-files=no | awk '{print $2}')"
-if [[ -n "$changed_files" && "$changed_files" != "model/nr-mac-scheduler-harq-rr.cc" ]]; then
+unexpected_changed_files="$(
+    printf '%s\n' "$changed_files" |
+        grep -vE '^(model/nr-mac-scheduler-harq-rr\.cc|helper/nr-helper\.cc|model/nr-gnb-net-device\.cc|model/nr-gnb-net-device\.h)$' || true
+)"
+if [[ -n "$unexpected_changed_files" ]]; then
     echo "5G-LENA has unrelated tracked changes; refusing to mix dependency patches." >&2
     "${git_nr[@]}" status --short >&2
     exit 1
@@ -115,6 +134,21 @@ if [[ "$check_only" -eq 1 ]]; then
             echo "Patched scheduler hash mismatch: $actual_source_sha256" >&2
             exit 1
         fi
+        actual_handover_sha256="$(sha256sum "$patched_handover_source" | awk '{print $1}')"
+        if [[ "$actual_handover_sha256" != "$EXPECTED_PATCHED_HANDOVER_SHA256" ]]; then
+            echo "Patched handover helper hash mismatch: $actual_handover_sha256" >&2
+            exit 1
+        fi
+        actual_gnb_device_cc_sha256="$(sha256sum "$patched_gnb_device_cc" | awk '{print $1}')"
+        actual_gnb_device_h_sha256="$(sha256sum "$patched_gnb_device_h" | awk '{print $1}')"
+        if [[ "$actual_gnb_device_cc_sha256" != "$EXPECTED_PATCHED_GNB_DEVICE_CC_SHA256" ]]; then
+            echo "Patched gNB device source hash mismatch: $actual_gnb_device_cc_sha256" >&2
+            exit 1
+        fi
+        if [[ "$actual_gnb_device_h_sha256" != "$EXPECTED_PATCHED_GNB_DEVICE_H_SHA256" ]]; then
+            echo "Patched gNB device header hash mismatch: $actual_gnb_device_h_sha256" >&2
+            exit 1
+        fi
     fi
     exit 0
 fi
@@ -131,10 +165,26 @@ if [[ "$actual_source_sha256" != "$EXPECTED_PATCHED_SOURCE_SHA256" ]]; then
     echo "Patched scheduler hash mismatch: $actual_source_sha256" >&2
     exit 1
 fi
+actual_handover_sha256="$(sha256sum "$patched_handover_source" | awk '{print $1}')"
+if [[ "$actual_handover_sha256" != "$EXPECTED_PATCHED_HANDOVER_SHA256" ]]; then
+    echo "Patched handover helper hash mismatch: $actual_handover_sha256" >&2
+    exit 1
+fi
+actual_gnb_device_cc_sha256="$(sha256sum "$patched_gnb_device_cc" | awk '{print $1}')"
+actual_gnb_device_h_sha256="$(sha256sum "$patched_gnb_device_h" | awk '{print $1}')"
+if [[ "$actual_gnb_device_cc_sha256" != "$EXPECTED_PATCHED_GNB_DEVICE_CC_SHA256" ]]; then
+    echo "Patched gNB device source hash mismatch: $actual_gnb_device_cc_sha256" >&2
+    exit 1
+fi
+if [[ "$actual_gnb_device_h_sha256" != "$EXPECTED_PATCHED_GNB_DEVICE_H_SHA256" ]]; then
+    echo "Patched gNB device header hash mismatch: $actual_gnb_device_h_sha256" >&2
+    exit 1
+fi
 
 mkdir -p "$scratch_dir"
 install -m 0644 \
     "$project_root/hsr_apps.h" \
+    "$project_root/hsr_handover.h" \
     "$project_root/hsr_io.h" \
     "$project_root/hsr_nr.h" \
     "$project_root/hsr_runner.h" \

@@ -23,8 +23,9 @@ pilot and eventual certification.
   as a simulator regression check.
 - `RESULTS.md` separates completed evidence from claim-ready evidence. Apply the
   same rule to hardware and live-radio trials.
-- The current handover optimizer is synthetic. Do not connect it to a live RAN or
-  describe it as a field-trained policy.
+- The synthetic handover optimizer has been removed. Do not introduce AI/RL
+  control until it consumes real corridor traces and is evaluated against
+  conventional handover baselines on held-out routes.
 
 ## v0.1 architecture
 
@@ -184,7 +185,8 @@ Restart
 ## NOT in scope for v0.1
 
 - Live RAN parameter writes: monitoring must be proven safe before any control path.
-- AI/DRL handover claims: there are no real corridor traces yet.
+- AI/DRL handover claims: simulator A3/X2 traces now exist, but no AI policy or
+  real route traces have been validated.
 - Mission-critical FRMCS or railway signalling: this prototype targets passenger
   direct-to-device connectivity validation only.
 - Public internet deployment: the standard-library server is local lab tooling.
