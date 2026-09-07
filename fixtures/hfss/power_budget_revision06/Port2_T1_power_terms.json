@@ -1,0 +1,55 @@
+{
+  "port": "Port2_T1",
+  "context": "Port2_T1:1Vincident:other0V:postprocessing=false:3.55GHz",
+  "native": {
+    "IncidentPower": 0.01,
+    "AcceptedPower": 0.009535137910453883,
+    "RadiatedPower": 0.009683582573328402,
+    "RadiationEfficiency": 1.0155681715638083
+  },
+  "coordinate_field_integral": {
+    "radiated_power_w": 0.00999995393974256,
+    "trapezoid_power_w": 0.009999306991101705,
+    "relative_quadrature_difference": 6.469516207309059e-05,
+    "relative_periodic_seam_difference": 1.4316964048007768e-16,
+    "theta_samples": 73,
+    "phi_samples": 145,
+    "ordering": "explicit_coordinates",
+    "phasor_convention": "peak"
+  },
+  "surface_loss_primary_w": {
+    "RoofCoupon": 4.2696915062355745e-06,
+    "Radiator1_SlantMinus": 9.449151501817538e-08,
+    "Radiator2_SlantPlus": 1.832281230853051e-05
+  },
+  "surface_loss_adjacent_w": {
+    "RoofCoupon": 4.2696915062355745e-06,
+    "Radiator1_SlantMinus": 9.449159662889197e-08,
+    "Radiator2_SlantPlus": 1.832271084052569e-05
+  },
+  "volume_loss_w": {
+    "RadomeShell_Port1": 1.2187925395891305e-07,
+    "RadomeShell_Port2": 1.5584097194629336e-06
+  },
+  "signed_boundary_flux_w": 0.009682266400677883,
+  "primary_surface_budget": {
+    "necessary_checks_pass": false,
+    "failures": [
+      "radiated_exceeds_accepted",
+      "input_power_closure",
+      "native_vs_field_power"
+    ],
+    "native_efficiency": 1.0155681715638083,
+    "field_efficiency": 1.048747698633606,
+    "loss_based_efficiency_diagnostic": 0.9974899659907028,
+    "relative_input_closure_residual": 0.018123696668116595,
+    "relative_native_field_difference": 0.03317952706979768,
+    "closure_tolerance": 0.005,
+    "loss_based_ratio_overrides_raw_failure": false,
+    "values_clipped": false,
+    "mesh_independence_demonstrated": false,
+    "independent_solver_validation": false
+  },
+  "surface_side_accounting_requires_review": true,
+  "fields_sha256": "ba8cc61de556d6bf80bcfeb5bde08394b9c7b4554511f1452e535dd0ff6dc010"
+}

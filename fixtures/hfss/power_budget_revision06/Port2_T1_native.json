@@ -1,0 +1,9 @@
+{
+  "context": "Port2_T1:1Vincident:other0V:postprocessing=false:3.55GHz",
+  "powers": {
+    "IncidentPower": 0.01,
+    "AcceptedPower": 0.009535137910453883,
+    "RadiatedPower": 0.009683582573328402,
+    "RadiationEfficiency": 1.0155681715638083
+  }
+}

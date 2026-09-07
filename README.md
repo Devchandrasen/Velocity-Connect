@@ -310,6 +310,30 @@ endpoint also accepts `--numerology`, `--nrScenario`, `--nrCondition`,
 
 ## Tests
 
+### Revision 06 validation work
+
+The revision adds a same-excitation HFSS power-budget audit and an offline replay
+of its retained numerical failure. The raw native efficiencies in that
+**simulation export**, not a physical measurement, remain above 100%; the
+implementation does not clip them or substitute a more favorable denominator.
+
+```powershell
+python hfss/replay_power_budget_revision06.py
+```
+
+See [the power correction protocol](reproducibility/revision06_power_plan.md),
+[the serial campaign launcher](reproducibility/vehcom_revision06_execution.md),
+and [the moving-link data admission contract](calibration/README.md).
+The launcher separates the fixed 680-run expansion from resource-only pilots
+and software tests. The data contract checks completeness and integrity but
+does not certify measurements, fit a channel or enable moving EM coupling.
+These additions do not establish calibrated railway performance or submission
+readiness. Earlier accepted scalar results remain separate and unchanged.
+The [Revision 06 status record](reproducibility/REVISION06_STATUS.md) distinguishes
+the completed audit, interrupted refinements, running queue and unresolved data.
+
+### CPU-only checks
+
 The CPU-only implementation tests do not require ns-3 or HFSS:
 
 ```powershell

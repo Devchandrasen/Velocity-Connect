@@ -113,6 +113,26 @@ fabricated or measured product.
 
 ## Evidence boundary
 
+Revision 06 adds an offline replay of the actual failed HFSS power budget:
+
+```powershell
+python hfss/replay_power_budget_revision06.py
+```
+
+The original native complex-field exports, independent power queries, loss terms
+and memory-guard report are preserved in `fixtures/hfss/power_budget_revision06`.
+Successful replay reproduces the discrepancy; it does not solve or validate the
+antenna. The new coordinate-aware tests and source hashes check only their stated
+software layers. See `reproducibility/revision06_power_plan.md` for controlled
+mesh experiments and their resource/license constraints.
+
+`scripts/run_vehcom_revision06.py` freezes serial campaign plans, verifies the
+pinned runtime, enforces resource budgets and retains failures. Its exact pinned
+WSL runtime remains an external prerequisite: this is not a clean-machine
+simulator installation guarantee. `calibration/measurement_contract.py` is
+standard-library-only and checks local data packages without granting calibration
+or exporting to the static C++ EM bridge.
+
 A passing unit test, source-manifest check, or simulator build demonstrates
 software reproducibility only. The repository does not claim VNA, OTA,
 installed-coach, route, or moving-train validation. HFSS gain and efficiency
