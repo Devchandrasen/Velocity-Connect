@@ -5,10 +5,11 @@ testing the **conditional feasibility** of a passive roof-to-cabin RF
 feedthrough for 5G NR high-speed-rail connectivity. It deliberately keeps
 three evidence classes separate:
 
-- the solved HFSS artifact is a two-port n78 donor coupon, not a complete
+- radiator coupons and guided four-ports are solved separately, not as a complete
   donor-feeder-service product;
-- the network experiment uses predeclared reciprocal scalar-loss hypotheses,
-  not HFSS gain or pattern import; and
+- the moving network experiment uses reciprocal scalar-loss hypotheses, while
+  an optional static interface imports complex transfers with explicit external
+  coupling operators; and
 - hardware, coach, route, and moving-train validation remain external gates.
 
 This GitHub repository is implementation-only. It contains executable source,
@@ -16,6 +17,25 @@ tests, pinned dependency metadata, selected native HFSS projects, and compact
 machine-readable fixtures. Manuscript sources, generated PDFs and figures,
 bulk solver trees, patent material, and local campaign outputs are excluded.
 Start with [REPRODUCIBILITY.md](REPRODUCIBILITY.md) for the clean-clone gates.
+
+## Revision 05 implementation
+
+The opt-in `em_complex` channel evaluates the actual V4/V5 four-port matrices
+per resource block, including coherent direct/passive addition and reciprocal
+single-stream projections. It requires explicit absolute external operators and
+rejects motion, missing coupling inputs and unsupported geometries. It is a
+static software interface, not a railway channel or full MIMO implementation.
+See the [interface contract and tests](reproducibility/em_bridge_v1_audit.md).
+
+A [frozen validation driver](reproducibility/vehcom_campaign_protocol.md) adds
+matched run identities, complete-ledger analysis, threshold sensitivity and
+separate principal/load/channel profiles. Those expanded profiles are plans,
+not completed scientific results. Short integration checks use synthetic
+external operators and must not be interpreted as device performance.
+
+HFSS power auditing checks raw powers and convergence without clipping.
+The stricter radiation-boundary diagnostic still exceeds the passive power
+bound; absolute efficiency and gain remain inadmissible. See [RESULTS.md](RESULTS.md).
 
 The repository models three coach configurations:
 

@@ -61,10 +61,28 @@ bash velocity_connect_tools/run_official_test_gate_v5.sh
 Every run writes an explicit configuration and attempt ledger. Failed or
 interrupted runs remain visible and are not promoted into summaries.
 
-## 3. HFSS implementation
+## 3. Static complex-transfer validation
+
+The optional numerical suite compiles with a C++17 compiler and runs as part of
+pytest. For a serial build against the pinned existing ns-3/NR libraries and
+five short integration runs, use a new output directory:
+
+```bash
+python3 tests/test_em_channel.py --ns3 /path/to/pinned/ns3 \
+  --work-dir /path/to/new/em-validation
+```
+
+This saves the exact source snapshot, binary/library hashes, synthetic input
+operators and bounded results. No dependency rebuild is performed. Use that
+immutable `source` snapshot with the new validation driver; do not bind a
+long-running plan to an actively edited checkout. The full interface contract
+and commands are in `reproducibility/em_bridge_v1_audit.md`; the campaign
+profiles and admission limits are in `reproducibility/vehcom_campaign_protocol.md`.
+
+## 4. HFSS implementation
 
 The `hfss` directory contains parameterized PyAEDT builders and native AEDT
-scripts. Five small native projects are retained as inspectable implementation
+scripts. Small native projects are retained as inspectable implementation
 artifacts:
 
 - the selected dual-port n78 screening antenna;
@@ -72,6 +90,11 @@ artifacts:
 - the dual-slant PTF radiator screening model;
 - the balanced PTF-V4 four-port control; and
 - the PTF-V5 physical-delay four-port.
+
+The exact B25/R12 radiator used in the conditional manuscript and the later
+first-order radiation-boundary diagnostic are also retained. Neither closes
+the absolute radiator-power gate. The latter converged but remains nonphysical.
+The original baseline is not overwritten by the new diagnostic.
 
 Create the optional HFSS environment on Windows:
 

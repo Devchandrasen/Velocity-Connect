@@ -3,6 +3,43 @@
 This ledger records completed terminal checks. A stability checkpoint is not a
 multi-seed system result and must not be presented as one.
 
+## 2026-09-07: Revision 05 implementation checks
+
+The local workspace suite passed **147 tests**, including 43 manuscript-analysis
+and packaging checks intentionally excluded from the implementation repository.
+A fresh extracted implementation archive passed its **104 source-only tests**
+and the 112-file manifest check on the same host. This is not a new-machine
+HFSS or full network-campaign reproduction. A serial isolated build
+against pinned ns-3.48 and 5G-LENA v5.0 passed 42 standalone complex-transfer
+checks, per-resource-block PSD integration tests, four 0.4 s EM CLI smokes and
+a scalar control. The three EM downlink cases each received 36/36 packets;
+the V5 uplink smoke received 34/36. Different synthetic received spectra did
+not imply a statistically established packet advantage.
+
+The final binary SHA-256 is
+`a57f40ab95bf1a3b4edb69dc564e7b39f4a821710b751898529adb8885755d8d`.
+The validation driver completed a 16-row scalar smoke and a six-row static
+bridge smoke. Two failed earlier bridge profiles remain excluded and are
+documented in `reproducibility/vehcom_campaign_protocol.md`.
+No expanded principal, load or channel-sensitivity campaign is complete.
+
+The new channel supports one static SISO link with explicit external complex
+operators and the solved four-port data. It rejects motion, missing operators,
+multiple links and duplicate scalar channel attenuation. It is **not** a
+calibrated moving-train co-design, full MIMO or an installed-device result.
+The legacy 816-run study and separate 60-run loss sweep are not recomputed or
+relabelled as matrix-coupled evidence.
+
+A stricter first-order radiation-boundary HFSS solve converged in 11 passes,
+with 34,585 tetrahedra and final maximum delta-S 0.0014877. Native radiation
+efficiency remained 1.015502 and 1.015454, so power closure **fails**. Source
+normalization diagnostics did not close the gap. A higher-order PML attempt
+was stopped after memory exhaustion and is not a completed solve. Exact
+commands and scope are in `reproducibility/radiator_power_revision05.md`.
+
+These changes strengthen executable checks and provenance, not antenna
+efficiency, A3 superiority, railway calibration or product readiness.
+
 ## Current guarded network campaign status
 
 The boundary-controlled `transaction-v3` campaign uses six gNBs, an interior

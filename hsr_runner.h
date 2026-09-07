@@ -24,6 +24,7 @@ using namespace ns3;
 
 inline Metrics RunOnce(RunConfig cfg)
 {
+  ValidateRunConfig(cfg);
   Metrics out;
 
   RngSeedManager::SetSeed(cfg.seed);
@@ -89,7 +90,7 @@ inline Metrics RunOnce(RunConfig cfg)
   // and suppresses usable A3 measurements in this 5G-LENA release. Preserve it
   // for the legacy single-cell profile; corridor runs use the helper's
   // isotropic antenna defaults so neighbour RSRP remains observable.
-  if (!cfg.enableHandover)
+  if (!cfg.enableHandover && cfg.passiveModel != PassiveModelType::EM_COMPLEX)
   {
     Ptr<IdealBeamformingHelper> bfHelper = CreateObject<IdealBeamformingHelper>();
     nrHelper->SetBeamformingHelper(bfHelper);
@@ -106,7 +107,7 @@ inline Metrics RunOnce(RunConfig cfg)
   std::vector<std::reference_wrapper<OperationBandInfo>> opBands;
   opBands.emplace_back(band);
 
-  ConfigureAndAssignChannels(cfg, opBands);
+  auto emModel = ConfigureAndAssignChannels(cfg, opBands, gnbNodes, ueNodes);
   BandwidthPartInfoPtrVector allBwps = CcBwpCreator::GetAllBwps(opBands);
 
   // UE PHY
@@ -140,6 +141,28 @@ inline Metrics RunOnce(RunConfig cfg)
 
   NetDeviceContainer gnbDevs = nrHelper->InstallGnbDevice(gnbNodes, allBwps);
   NetDeviceContainer ueDevs  = nrHelper->InstallUeDevice(ueNodes, allBwps);
+
+  int64_t nrAssigned = 0;
+  if (cfg.nrRngStream >= 0)
+  {
+    nrAssigned += nrHelper->AssignStreams(gnbDevs,cfg.nrRngStream);
+    nrAssigned += nrHelper->AssignStreams(ueDevs,cfg.nrRngStream+nrAssigned);
+  }
+  // Apply the separate channel block AFTER helper assignment (which also assigns
+  // 3GPP channels). This makes the explicit override stable across device counts.
+  const int64_t channelAssigned = AssignExplicitChannelStreams(cfg,allBwps);
+  if (cfg.nrRngStream >= 0 && cfg.channelRngStream >= 0 &&
+      cfg.nrRngStream < cfg.channelRngStream+channelAssigned &&
+      cfg.channelRngStream < cfg.nrRngStream+nrAssigned)
+    throw std::invalid_argument("nrRngStream and channelRngStream blocks overlap");
+  if (cfg.nrRngStream >= 0 || cfg.channelRngStream >= 0)
+  {
+    WriteCsvHeader(cfg.outDir+"/rng_stream_audit.csv",
+      "seed,run,nr_first,nr_count,channel_override_first,channel_override_count,common_channel_realizations_verified");
+    AppendCsvLine(cfg.outDir+"/rng_stream_audit.csv",std::to_string(cfg.seed)+","+
+      std::to_string(cfg.run)+","+std::to_string(cfg.nrRngStream)+","+std::to_string(nrAssigned)+","+
+      std::to_string(cfg.channelRngStream)+","+std::to_string(channelAssigned)+",0");
+  }
 
   // EPC: remote host <-> PGW
   Ptr<Node> pgw = epcHelper->GetPgwNode();
@@ -274,6 +297,7 @@ inline Metrics RunOnce(RunConfig cfg)
 
   Simulator::Stop(Seconds(cfg.simTimeS));
   Simulator::Run();
+  if (emModel) emModel->WriteRuntimeAudit();
   out.badIpv4LengthDrops = ipv4DropTracker.GetBadLengthDrops();
   out.shortTransportHeaderHashEvents =
     GetIpv4QueueDiscShortTransportHeaderHashEvents();
@@ -443,6 +467,19 @@ inline Metrics RunOnce(RunConfig cfg)
 
 inline void RunSingle(RunConfig cfg)
 {
+  ValidateRunConfig(cfg);
+  if (cfg.passiveModel == PassiveModelType::EM_COMPLEX)
+  {
+    // Preflight before creating any output, including failed/unsupported inputs.
+    hsr::em::Bridge bridge(cfg.emTouchstonePath,cfg.emOperatorsPath,cfg.emMapping);
+    bridge.ValidateRange(cfg.carrierHz-cfg.bandwidthHz/2,cfg.carrierHz+cfg.bandwidthHz/2);
+    const hsr::em::Position gnb{0,cfg.gnbLateralOffsetM,cfg.gnbHeight};
+    const hsr::em::Position ue{cfg.distanceM,0,cfg.ueHeight};
+    hsr::em::Require(bridge.installation.gnb == gnb && bridge.installation.ue == ue,
+                    "operator geometry must equal configured static link");
+    if (std::filesystem::exists(cfg.outDir) && !std::filesystem::is_empty(cfg.outDir))
+      throw std::invalid_argument("em_complex requires a fresh empty outDir; existing results are protected");
+  }
   EnsureDir(cfg.outDir);
   const std::string path = cfg.outDir + "/single_run.csv";
   WriteCsvHeader(path,
@@ -461,7 +498,8 @@ inline void RunSingle(RunConfig cfg)
     "p50_lat_ms,p95_lat_ms,jain_fairness,handover_attempts,handover_successes,"
     "handover_failures,mean_handover_duration_ms,max_handover_duration_ms,"
     "mean_application_gap_ms,max_application_gap_ms,bad_ipv4_length_drops,"
-    "short_transport_header_hash_events");
+    "short_transport_header_hash_events,channel_path,em_mapping,em_touchstone,em_operators,"
+    "nr_rng_stream,channel_rng_stream,common_channel_realizations_verified");
 
   Metrics m = RunOnce(cfg);
   PassiveLinkBudget passiveBudget;
@@ -508,7 +546,7 @@ inline void RunSingle(RunConfig cfg)
        << (hasComponentBudget ? passiveBudget.serviceGainDbi : unavailable) << ","
        << (hasComponentBudget ? passiveBudget.networkLossDb : unavailable) << ","
        << (hasComponentBudget ? passiveBudget.apertureGainDb : unavailable) << ","
-       << ComputeEffectivePenetrationLossDb(cfg) << ","
+       << (cfg.passiveModel == PassiveModelType::EM_COMPLEX ? unavailable : ComputeEffectivePenetrationLossDb(cfg)) << ","
        << cfg.gnbTxPowerDbm << ","
        << cfg.ueTxPowerDbm << ","
        << (cfg.gnbTxPowerDbm - ComputeEffectivePenetrationLossDb(cfg)) << ","
@@ -534,7 +572,11 @@ inline void RunSingle(RunConfig cfg)
        << m.meanApplicationGapMs << ","
        << m.maxApplicationGapMs << ","
        << m.badIpv4LengthDrops << ","
-       << m.shortTransportHeaderHashEvents;
+       << m.shortTransportHeaderHashEvents << ","
+       << (cfg.passiveModel == PassiveModelType::EM_COMPLEX ? "em_absolute_static_siso" : "nr_legacy_scalar") << ","
+       << CsvCell(cfg.passiveModel == PassiveModelType::EM_COMPLEX ? cfg.emMapping : "") << ","
+       << CsvCell(cfg.emTouchstonePath) << "," << CsvCell(cfg.emOperatorsPath) << ","
+       << cfg.nrRngStream << "," << cfg.channelRngStream << ",0";
   AppendCsvLine(path, line.str());
 
   const std::string ueMetricsPath = cfg.outDir + "/ue_metrics.csv";

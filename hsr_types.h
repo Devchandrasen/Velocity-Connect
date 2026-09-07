@@ -12,7 +12,8 @@ enum class PassiveModelType
 {
   LEGACY_SCALAR,
   COMPONENT_BUDGET,
-  DECLARED_SCALAR
+  DECLARED_SCALAR,
+  EM_COMPLEX
 };
 enum class TrafficDirection { DOWNLINK, UPLINK };
 
@@ -61,6 +62,7 @@ inline std::string PassiveModelToString(PassiveModelType model)
     case PassiveModelType::LEGACY_SCALAR: return "legacy_scalar";
     case PassiveModelType::COMPONENT_BUDGET: return "component_budget";
     case PassiveModelType::DECLARED_SCALAR: return "declared_scalar";
+    case PassiveModelType::EM_COMPLEX: return "em_complex";
   }
   return "unknown";
 }
@@ -88,6 +90,11 @@ inline bool TryParsePassiveModel(const std::string& value, PassiveModelType& out
   if (normalized == "declared" || normalized == "declared_scalar")
   {
     out = PassiveModelType::DECLARED_SCALAR;
+    return true;
+  }
+  if (normalized == "em_complex")
+  {
+    out = PassiveModelType::EM_COMPLEX;
     return true;
   }
   return false;
@@ -199,6 +206,10 @@ struct RunConfig
   // Scenario
   ScenarioType scenario{ScenarioType::REPEATER};
   PassiveModelType passiveModel{PassiveModelType::COMPONENT_BUDGET};
+  // Explicit replacement channel: no default installed gain or projection.
+  std::string emTouchstonePath;
+  std::string emOperatorsPath;
+  std::string emMapping{"cross"};
 
   // Baseline VPL
   double metalVplDb{60.0};
@@ -218,6 +229,9 @@ struct RunConfig
   // RNG
   uint64_t seed{1};
   uint64_t run{1};
+  // -1 preserves automatic stream allocation and legacy behaviour.
+  int64_t nrRngStream{-1};
+  int64_t channelRngStream{-1};
 
   // Scheduler
   std::string schedulerType{"ns3::NrMacSchedulerOfdmaPF"};
@@ -277,6 +291,20 @@ inline PassiveLinkBudget ComputePassiveLinkBudget(const RunConfig& cfg)
 
 inline void ValidateRunConfig(const RunConfig& cfg)
 {
+  if (cfg.nrRngStream < -1 || cfg.channelRngStream < -1)
+    throw std::invalid_argument("RNG stream controls must be -1 or non-negative");
+  if (cfg.passiveModel == PassiveModelType::EM_COMPLEX)
+  {
+    if (cfg.emTouchstonePath.empty() || cfg.emOperatorsPath.empty())
+      throw std::invalid_argument("em_complex requires emTouchstone and emOperators; HFSS alone lacks installed coupling");
+    if (cfg.emMapping != "straight" && cfg.emMapping != "cross")
+      throw std::invalid_argument("emMapping must be straight or cross");
+    if (cfg.scenario != ScenarioType::REPEATER || cfg.numGnbs != 1 || cfg.numUes != 1 ||
+        cfg.speedKmph != 0 || cfg.enableHandover || cfg.guardedCorridor || cfg.channelUpdatePeriodMs != 0)
+      throw std::invalid_argument("em_complex supports only one static gNB/UE repeater link; dynamic per-link installed operators are missing");
+    if (cfg.channelRngStream != -1)
+      throw std::invalid_argument("em_complex replaces stochastic propagation; channelRngStream is not applicable");
+  }
   RequireFinitePositive("carrierHz", cfg.carrierHz);
   RequireFinitePositive("bandwidthHz", cfg.bandwidthHz);
   RequireFinitePositive("gnbHeight", cfg.gnbHeight);
@@ -410,6 +438,8 @@ inline void ApplyGuardedCorridorWindow(RunConfig& cfg)
 
 inline double ComputeEffectivePenetrationLossDb(const RunConfig& cfg)
 {
+  // EM loss is applied to received PSD, not again to either transmitter.
+  if (cfg.passiveModel == PassiveModelType::EM_COMPLEX) return 0.0;
   if (cfg.scenario == ScenarioType::METAL) return cfg.metalVplDb;
   if (cfg.scenario == ScenarioType::COMPOSITE) return cfg.compositeVplDb;
   if (cfg.passiveModel == PassiveModelType::LEGACY_SCALAR)
