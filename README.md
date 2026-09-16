@@ -76,7 +76,7 @@ hypotheses. The complex four-port bridge is a separate static interface. See
 
 | Evidence gate | Status | Supported interpretation |
 |---|---|---|
-| CPU implementation suite | Pass: 259 tests, 1 skipped, 85 subtests | Campaign construction, RF algebra, calibration validation, ledgers, statistics, and prototype behavior are executable |
+| CPU implementation suite | Pass locally; repeated by GitHub Actions on every pull request | Campaign construction, RF algebra, calibration validation, ledgers, statistics, and prototype behavior are executable |
 | Byte-level source manifest | Pass: 150 files | Reviewed implementation inputs and compact fixtures can be checked for drift |
 | Transaction-v3 network campaign | Pass | 30 terminal ledgers contain 816 successful scalar-hypothesis simulation runs |
 | Static complex EM bridge | Pass with boundary | Solved four-port coefficients can drive a static single-stream interface with explicit external operators |
