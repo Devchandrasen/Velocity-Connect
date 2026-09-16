@@ -6,6 +6,26 @@
       "sha256": "7f377ee2917ba8266d4c44417b9bbf2f1e13a67ddb736f587dbb1f82e46127f9"
     },
     {
+      "bytes": 1500,
+      "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "sha256": "179086199b454c5118c7e08193059558689700a87c69f391fded5eb0c453011b"
+    },
+    {
+      "bytes": 240,
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "sha256": "3ab603f37035cae4f694ffb19fe18e5307acf5c5ddc8ce69311c3960f2ae1e5c"
+    },
+    {
+      "bytes": 1673,
+      "path": ".github/ISSUE_TEMPLATE/reproducibility.yml",
+      "sha256": "04901709e288d1c18ea9b7a9699181a2349ba0b9fb66a1e80c276bf9308bb3f9"
+    },
+    {
+      "bytes": 779,
+      "path": ".github/PULL_REQUEST_TEMPLATE.md",
+      "sha256": "677a483d52765ff4a3489f18941573c6dcc69405e78a62bd6409b1b0a5935f82"
+    },
+    {
       "bytes": 797,
       "path": ".github/workflows/implementation-ci.yml",
       "sha256": "8335b78684d77e4eb2512da38e836c38383f4b039d5134057ba3c5a4b9c53a56"
@@ -16,14 +36,19 @@
       "sha256": "cf63d5d979e76ea534ec2b3bedfc9a36b0f5a786187da30df1d61b81554ad853"
     },
     {
+      "bytes": 2974,
+      "path": "CONTRIBUTING.md",
+      "sha256": "587f207ee10c7f683b506864a419c99c1999b76894be8a1a8b6e1f0d9eee92c1"
+    },
+    {
       "bytes": 4460,
       "path": "EXPERIMENT_PROTOCOL.md",
       "sha256": "dc08d02b11a39388fcbd784a0c5ae556d934af3d6587d6d67d91d07ed2c1ea0a"
     },
     {
-      "bytes": 13831,
+      "bytes": 9322,
       "path": "README.md",
-      "sha256": "e4d2d839fa4f715d01b5c0e5dd3ebee868815885e4af95e71f308779e326fa13"
+      "sha256": "d0c9b5a7fd992882d21a966d58b5b983af5d880bc3d88e48e1233d8057c90102"
     },
     {
       "bytes": 5881,
@@ -49,6 +74,36 @@
       "bytes": 19616,
       "path": "calibration/measurement_contract.py",
       "sha256": "267b8859ad50a62d6a0df6df08f1209d8364ae035cc114cbe602d838619d17ab"
+    },
+    {
+      "bytes": 5714,
+      "path": "docs/architecture.md",
+      "sha256": "a987fc4451780d74bbcd139fd2995ffb4f57f54a0ace4faa8e6a9a4b56bcbef8"
+    },
+    {
+      "bytes": 4115,
+      "path": "docs/assets/velocity-connect-banner.svg",
+      "sha256": "0a239b02da21125119762a71885b7ec08f57149f711285b6a5c1a247e9783295"
+    },
+    {
+      "bytes": 5127,
+      "path": "docs/evidence-model.md",
+      "sha256": "d1a2e3a42ecbef833aacf795071cac0e1dcff9df949031d140a4a349e126e65f"
+    },
+    {
+      "bytes": 5571,
+      "path": "docs/experiment-reference.md",
+      "sha256": "fbf24046df33fa16e8ab48f3038a48eb11490bc336c9704a5f749034fea8ed2c"
+    },
+    {
+      "bytes": 4105,
+      "path": "docs/getting-started.md",
+      "sha256": "22986dd1bea887a4b20a3f62dae060368f393a7f0c8174325dec76aa1570dfeb"
+    },
+    {
+      "bytes": 4712,
+      "path": "docs/how-to-run-a-campaign.md",
+      "sha256": "6a72d8d0077642e968e9480abc50db7397f3d6a0126afe5a7568229e17610e19"
     },
     {
       "bytes": 425,
@@ -591,9 +646,9 @@
       "sha256": "0a4e4980efb06c18cd369762b5e0dbd3ce28b196d57dabe4352180610e1f49bc"
     },
     {
-      "bytes": 8374,
+      "bytes": 8838,
       "path": "scripts/verify_source_manifest.py",
-      "sha256": "34ed863950ea8c6f81a8af93970f9f1c7816b52c0618fc1ff6fcb9ba2419225a"
+      "sha256": "34a921a5143c3a144130317bb9d3f6bd6c0b7645efe671060569d2b93b451a00"
     },
     {
       "bytes": 2448,
@@ -654,6 +709,11 @@
       "bytes": 2318,
       "path": "tests/test_radiator_power_audit.py",
       "sha256": "20cf0ca1719c8c79f0663c28e86829172c2bf673995d01cdba230937b1b22804"
+    },
+    {
+      "bytes": 1964,
+      "path": "tests/test_repository_docs.py",
+      "sha256": "942739dfaaeb43a31d9515019939e39ba0826381bff6945314770b15c6daf8df"
     },
     {
       "bytes": 13171,

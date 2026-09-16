@@ -12,7 +12,12 @@ MANIFEST = ROOT / "reproducibility" / "source_manifest.json"
 REQUIRED_FILES = (
     ".gitattributes",
     ".gitignore",
+    ".github/ISSUE_TEMPLATE/bug_report.yml",
+    ".github/ISSUE_TEMPLATE/config.yml",
+    ".github/ISSUE_TEMPLATE/reproducibility.yml",
+    ".github/PULL_REQUEST_TEMPLATE.md",
     ".github/workflows/implementation-ci.yml",
+    "CONTRIBUTING.md",
     "README.md",
     "REPRODUCIBILITY.md",
     "RESULTS.md",
@@ -39,6 +44,12 @@ REQUIRED_FILES = (
     "statistical_evidence.py",
     "verify_corridor_checkpoint.py",
     "measurement_template.csv",
+    "docs/architecture.md",
+    "docs/assets/velocity-connect-banner.svg",
+    "docs/evidence-model.md",
+    "docs/experiment-reference.md",
+    "docs/getting-started.md",
+    "docs/how-to-run-a-campaign.md",
     "environment/python-runtime.json",
     "environment/requirements-hashed-win-py312.txt",
     "environment/requirements-lock.txt",
@@ -137,6 +148,7 @@ REQUIRED_FILES = (
     "tests/test_em_channel_ns3.cc",
     "tests/test_radiator_power_audit.py",
     "tests/test_power_balance.py",
+    "tests/test_repository_docs.py",
     "tests/test_calibration_contract.py",
     "tests/test_vehcom_revision06.py",
     "tests/test_vehcom_validation.py",
@@ -188,10 +200,8 @@ def main() -> int:
     current = current_manifest()
     if args.write:
         MANIFEST.parent.mkdir(parents=True, exist_ok=True)
-        MANIFEST.write_text(
-            json.dumps(current, indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
-        )
+        with MANIFEST.open("w", encoding="utf-8", newline="\n") as handle:
+            handle.write(json.dumps(current, indent=2, sort_keys=True) + "\n")
         print(f"WROTE {MANIFEST.relative_to(ROOT)} ({len(current['files'])} files)")
         return 0
     if not MANIFEST.is_file():

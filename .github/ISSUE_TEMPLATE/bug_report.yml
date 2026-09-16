@@ -1,0 +1,53 @@
+name: Implementation bug
+description: Report a reproducible software defect in the repository.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Report implementation behavior here. Use the reproducibility template for simulator, solver, or environment reproduction failures.
+  - type: input
+    id: commit
+    attributes:
+      label: Git commit
+      description: Output of `git rev-parse HEAD`.
+      placeholder: 40-character commit hash
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Exact command
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+      description: Include the complete error and the first point at which behavior differs from expectation.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Python version, and relevant dependency versions.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checks
+      options:
+        - label: I searched existing issues.
+          required: true
+        - label: I removed credentials, private data, and proprietary licence files.
+          required: true

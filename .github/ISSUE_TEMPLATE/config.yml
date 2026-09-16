@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Reproduction guide
+    url: https://github.com/Devchandrasen/Velocity-Connect/blob/main/REPRODUCIBILITY.md
+    about: Check the pinned environments and evidence boundaries before filing.
