@@ -24,4 +24,7 @@ jobs:
       - name: Verify byte-level implementation manifest
         run: python scripts/verify_source_manifest.py
       - name: Run implementation tests
-        run: python -m pytest -q
+        # setup-python injects LD_LIBRARY_PATH for its hosted runtime. The
+        # scientific launcher intentionally rejects dynamic-loader overrides,
+        # so remove only the runner-provided value for the test process.
+        run: env -u LD_LIBRARY_PATH python -m pytest -q

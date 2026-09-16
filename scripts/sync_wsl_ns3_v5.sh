@@ -159,6 +159,7 @@ fi
 mkdir -p "$scratch_dir" "$tools_dir"
 install -m 0644 \
     "$project_root/hsr_apps.h" \
+    "$project_root/hsr_em_channel.h" \
     "$project_root/hsr_handover.h" \
     "$project_root/hsr_io.h" \
     "$project_root/hsr_nr.h" \

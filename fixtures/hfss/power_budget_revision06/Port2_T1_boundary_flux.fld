@@ -1,0 +1,2 @@
+Scalar data "Integrate(Surface(RadiatingSurface), Dot(Real(Poynting), SurfaceNormal))"
+9.6822664006778834e-03

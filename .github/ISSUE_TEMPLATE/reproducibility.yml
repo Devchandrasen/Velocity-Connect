@@ -1,0 +1,54 @@
+name: Reproducibility problem
+description: Report a failure to reproduce a documented CPU, ns-3, 5G-LENA, or HFSS step.
+title: "[Reproduction]: "
+labels: [reproducibility]
+body:
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Evidence layer
+      options:
+        - CPU tests or source manifest
+        - ns-3 and 5G-LENA build
+        - Network campaign
+        - HFSS project or export
+        - Calibration package
+        - Local telemetry prototype
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Velocity Connect commit
+      placeholder: 40-character commit hash
+    validations:
+      required: true
+  - type: textarea
+    id: pins
+    attributes:
+      label: Dependency pins
+      description: Include Python, ns-3, 5G-LENA, AEDT, and PyAEDT versions that apply.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Commands and output
+      description: Provide the exact commands and terminal output. State whether the failure occurred before simulation, during a run, or during analysis.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Relevant artifact identities
+      description: List plan IDs, run IDs, hashes, or fixture names. Do not upload proprietary files.
+  - type: checkboxes
+    id: integrity
+    attributes:
+      label: Integrity checks
+      options:
+        - label: I did not delete, edit, or relabel failed run records.
+          required: true
+        - label: I removed credentials, private measurements, and licence material.
+          required: true

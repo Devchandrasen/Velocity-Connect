@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">Velocity Connect</title>
+  <desc id="desc">A high speed train receives a 5G signal through a passive roof-to-cabin feedthrough.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07152c"/>
+      <stop offset="0.52" stop-color="#0b3150"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+    <linearGradient id="train" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e7f4f7"/>
+      <stop offset="1" stop-color="#9bcbd2"/>
+    </linearGradient>
+    <linearGradient id="signal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#5eead4"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="360" rx="24" fill="url(#bg)"/>
+  <g opacity="0.16" stroke="#8dd9e3" stroke-width="1">
+    <path d="M0 74H1200M0 146H1200M0 218H1200M0 290H1200"/>
+    <path d="M90 0V360M210 0V360M330 0V360M450 0V360M570 0V360M690 0V360M810 0V360M930 0V360M1050 0V360M1170 0V360"/>
+  </g>
+  <g transform="translate(68 68)">
+    <path d="M20 216H478" stroke="#78d9d1" stroke-width="5" stroke-linecap="round" opacity="0.7"/>
+    <path d="M45 194C60 147 103 119 154 119H365C411 119 447 145 466 188L474 207H37Z" fill="url(#train)"/>
+    <path d="M82 135H365C392 135 417 151 431 178H65C69 161 75 147 82 135Z" fill="#0b2138"/>
+    <path d="M111 143V178M173 143V178M235 143V178M297 143V178M359 143V178" stroke="#4d9eac" stroke-width="4"/>
+    <path d="M38 207H473" stroke="#dff7f5" stroke-width="4"/>
+    <circle cx="125" cy="211" r="17" fill="#07152c" stroke="#80ddd5" stroke-width="5"/>
+    <circle cx="391" cy="211" r="17" fill="#07152c" stroke="#80ddd5" stroke-width="5"/>
+    <path d="M255 80V122" stroke="#5eead4" stroke-width="7" stroke-linecap="round" filter="url(#glow)"/>
+    <circle cx="255" cy="80" r="9" fill="#5eead4" filter="url(#glow)"/>
+    <circle cx="255" cy="122" r="9" fill="#38bdf8" filter="url(#glow)"/>
+    <path d="M255 122V174" stroke="#38bdf8" stroke-width="5" stroke-dasharray="7 8"/>
+    <g fill="none" stroke="url(#signal)" stroke-width="5" stroke-linecap="round" filter="url(#glow)">
+      <path d="M278 70C318 91 318 116 278 137"/>
+      <path d="M294 48C360 83 360 124 294 159" opacity="0.8"/>
+      <path d="M312 26C405 75 405 132 312 181" opacity="0.55"/>
+    </g>
+    <g transform="translate(0 7)" stroke="#8ce8df" stroke-width="5" fill="none" stroke-linecap="round">
+      <path d="M2 96H54"/>
+      <path d="M16 73H63" opacity="0.72"/>
+      <path d="M31 50H76" opacity="0.45"/>
+    </g>
+  </g>
+  <g transform="translate(610 94)">
+    <text x="0" y="0" fill="#eefcfc" font-family="Segoe UI, Arial, sans-serif" font-size="54" font-weight="700" letter-spacing="1">VELOCITY CONNECT</text>
+    <rect x="0" y="28" width="476" height="4" rx="2" fill="url(#signal)"/>
+    <text x="0" y="77" fill="#bcebf0" font-family="Segoe UI, Arial, sans-serif" font-size="24">Passive 5G NR feedthrough research</text>
+    <text x="0" y="111" fill="#bcebf0" font-family="Segoe UI, Arial, sans-serif" font-size="24">for high speed railway coaches</text>
+    <g transform="translate(0 151)" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="600" letter-spacing="1">
+      <rect width="124" height="38" rx="19" fill="#123e5a" stroke="#38bdf8"/>
+      <text x="62" y="24" text-anchor="middle" fill="#d9f7ff">HFSS</text>
+      <rect x="142" width="160" height="38" rx="19" fill="#123e5a" stroke="#5eead4"/>
+      <text x="222" y="24" text-anchor="middle" fill="#d9fff9">NS-3 + 5G-LENA</text>
+      <rect x="320" width="174" height="38" rx="19" fill="#123e5a" stroke="#fbbf24"/>
+      <text x="407" y="24" text-anchor="middle" fill="#fff3c4">EVIDENCE-GATED</text>
+    </g>
+  </g>
+</svg>

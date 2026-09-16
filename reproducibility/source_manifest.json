@@ -1,14 +1,34 @@
 {
   "files": [
     {
-      "bytes": 310,
+      "bytes": 566,
       "path": ".gitattributes",
-      "sha256": "5905cafb20c49dbe25525eee5f3a5334a783f9f43cecd42aa6b898fd80817e40"
+      "sha256": "7f377ee2917ba8266d4c44417b9bbf2f1e13a67ddb736f587dbb1f82e46127f9"
     },
     {
-      "bytes": 797,
+      "bytes": 1500,
+      "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "sha256": "179086199b454c5118c7e08193059558689700a87c69f391fded5eb0c453011b"
+    },
+    {
+      "bytes": 240,
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "sha256": "3ab603f37035cae4f694ffb19fe18e5307acf5c5ddc8ce69311c3960f2ae1e5c"
+    },
+    {
+      "bytes": 1673,
+      "path": ".github/ISSUE_TEMPLATE/reproducibility.yml",
+      "sha256": "04901709e288d1c18ea9b7a9699181a2349ba0b9fb66a1e80c276bf9308bb3f9"
+    },
+    {
+      "bytes": 779,
+      "path": ".github/PULL_REQUEST_TEMPLATE.md",
+      "sha256": "677a483d52765ff4a3489f18941573c6dcc69405e78a62bd6409b1b0a5935f82"
+    },
+    {
+      "bytes": 1046,
       "path": ".github/workflows/implementation-ci.yml",
-      "sha256": "8335b78684d77e4eb2512da38e836c38383f4b039d5134057ba3c5a4b9c53a56"
+      "sha256": "9668a6139569bd3fc68c758e3486fc73b6b5f68c7b968a02b1abbd658c088950"
     },
     {
       "bytes": 1630,
@@ -16,29 +36,74 @@
       "sha256": "cf63d5d979e76ea534ec2b3bedfc9a36b0f5a786187da30df1d61b81554ad853"
     },
     {
+      "bytes": 2974,
+      "path": "CONTRIBUTING.md",
+      "sha256": "587f207ee10c7f683b506864a419c99c1999b76894be8a1a8b6e1f0d9eee92c1"
+    },
+    {
       "bytes": 4460,
       "path": "EXPERIMENT_PROTOCOL.md",
       "sha256": "dc08d02b11a39388fcbd784a0c5ae556d934af3d6587d6d67d91d07ed2c1ea0a"
     },
     {
-      "bytes": 11443,
+      "bytes": 9345,
       "path": "README.md",
-      "sha256": "363bcd1169b5d3b289da312dd3faf76064e6fb1c26da6339e966625109ea9770"
+      "sha256": "d447753a0c25cb367d6241bb2d8ae7dac4862fd9cbfd66b469feb986120fb1aa"
     },
     {
-      "bytes": 3717,
+      "bytes": 5881,
       "path": "REPRODUCIBILITY.md",
-      "sha256": "eadc7170ab8c7cbba386a362962ce7e15e24c944ae8d35c7e538af78de3d9330"
+      "sha256": "f402caee22b3355428eadd4b2443618376571d0e46233d06cfe5660f58ecdb2f"
     },
     {
-      "bytes": 8575,
+      "bytes": 10773,
       "path": "RESULTS.md",
-      "sha256": "7568b4b0f5d59410161c658c4cc3bed02e66b5c0d78f7b58aa0587fcc50b293d"
+      "sha256": "0d90a26b33b63ec00072efcbf9585f70fe5afad5b7f172f4bff458c31fcc70bc"
     },
     {
       "bytes": 3644,
       "path": "calibrate_passive_model.py",
       "sha256": "c20ca9322feef54729e2ad979b486630d993dfe94dea691d9c019362de21144f"
+    },
+    {
+      "bytes": 22062,
+      "path": "calibration/README.md",
+      "sha256": "ba1b0467ce5055459d1170dd0fd30713536835999060e73f7664a8d8d8d1e1d5"
+    },
+    {
+      "bytes": 19616,
+      "path": "calibration/measurement_contract.py",
+      "sha256": "267b8859ad50a62d6a0df6df08f1209d8364ae035cc114cbe602d838619d17ab"
+    },
+    {
+      "bytes": 5714,
+      "path": "docs/architecture.md",
+      "sha256": "a987fc4451780d74bbcd139fd2995ffb4f57f54a0ace4faa8e6a9a4b56bcbef8"
+    },
+    {
+      "bytes": 4115,
+      "path": "docs/assets/velocity-connect-banner.svg",
+      "sha256": "0a239b02da21125119762a71885b7ec08f57149f711285b6a5c1a247e9783295"
+    },
+    {
+      "bytes": 5127,
+      "path": "docs/evidence-model.md",
+      "sha256": "d1a2e3a42ecbef833aacf795071cac0e1dcff9df949031d140a4a349e126e65f"
+    },
+    {
+      "bytes": 5571,
+      "path": "docs/experiment-reference.md",
+      "sha256": "fbf24046df33fa16e8ab48f3038a48eb11490bc336c9704a5f749034fea8ed2c"
+    },
+    {
+      "bytes": 4105,
+      "path": "docs/getting-started.md",
+      "sha256": "22986dd1bea887a4b20a3f62dae060368f393a7f0c8174325dec76aa1570dfeb"
+    },
+    {
+      "bytes": 4712,
+      "path": "docs/how-to-run-a-campaign.md",
+      "sha256": "6a72d8d0077642e968e9480abc50db7397f3d6a0126afe5a7568229e17610e19"
     },
     {
       "bytes": 425,
@@ -81,6 +146,61 @@
       "sha256": "562ec1c73e1b681ef896d56a67d2f6be56b9dac402b13d744e9ea59ae0b8707c"
     },
     {
+      "bytes": 110,
+      "path": "fixtures/hfss/power_budget_revision06/Port1_T1_boundary_flux.fld",
+      "sha256": "5c70b9251a0f50455ff5cdfff31857da70d40b48010b230dc868728a66b7bde5"
+    },
+    {
+      "bytes": 1743681,
+      "path": "fixtures/hfss/power_budget_revision06/Port1_T1_complex_fields.csv",
+      "sha256": "5adf102ca429ff0d48f7570b5aaff054f535e28d9e3e9e750e0a7f0373764915"
+    },
+    {
+      "bytes": 261,
+      "path": "fixtures/hfss/power_budget_revision06/Port1_T1_native.json",
+      "sha256": "3af25563326e65527c08fec429258f7625ed41b0b04a0151992af2fe16afd301"
+    },
+    {
+      "bytes": 2034,
+      "path": "fixtures/hfss/power_budget_revision06/Port1_T1_power_terms.json",
+      "sha256": "f6d572d3a55dfc09752e5daa4ea1c696ec0e20d3ba789ec9f8527055842147b9"
+    },
+    {
+      "bytes": 110,
+      "path": "fixtures/hfss/power_budget_revision06/Port2_T1_boundary_flux.fld",
+      "sha256": "553766baf6091283b2fd77c19e138c70999e77864691cc8c89c414b509b75b6e"
+    },
+    {
+      "bytes": 1743912,
+      "path": "fixtures/hfss/power_budget_revision06/Port2_T1_complex_fields.csv",
+      "sha256": "ba8cc61de556d6bf80bcfeb5bde08394b9c7b4554511f1452e535dd0ff6dc010"
+    },
+    {
+      "bytes": 261,
+      "path": "fixtures/hfss/power_budget_revision06/Port2_T1_native.json",
+      "sha256": "c03e933900569b65a207a01bb470f3c9dfd86f789239002c9c15723af02138f3"
+    },
+    {
+      "bytes": 2034,
+      "path": "fixtures/hfss/power_budget_revision06/Port2_T1_power_terms.json",
+      "sha256": "834f4d0f9f927d3d4a7ebbf72dc4440c0e037649e845d9d4422ec6f74211b455"
+    },
+    {
+      "bytes": 1883,
+      "path": "fixtures/hfss/power_budget_revision06/README.md",
+      "sha256": "7912b95d7509963abfc994eb3d341da09eaaa432fedd905fa4fd18e2c4e1eb7e"
+    },
+    {
+      "bytes": 5122,
+      "path": "fixtures/hfss/power_budget_revision06/power_budget_report.json",
+      "sha256": "4e64f12c23c539190b81181cd0de1334b68d158cf061420acb2df42b0e242748"
+    },
+    {
+      "bytes": 954,
+      "path": "fixtures/hfss/power_budget_revision06/resource_guard.json",
+      "sha256": "00383bd83da86104b99db32ae3dd0ada283071af7cf5171e0c1a09678b147c09"
+    },
+    {
       "bytes": 9467,
       "path": "hardware/analyze_vna_touchstone.py",
       "sha256": "be33321260a9e847d7f0da87a9e94d21dfb30c79ce8652065c850a38341ea250"
@@ -101,6 +221,11 @@
       "sha256": "9e8986971c14b78c3319155cf3d8206eaf3f9cd3ad93c07056f63ab720b6f5b0"
     },
     {
+      "bytes": 98286,
+      "path": "hfss/Velocity_Connect_Vehcom_R05_PowerClosure_B1_Radiation.aedt",
+      "sha256": "d671f9c8fd9209e1ca735b49bd1836e880828bb73cfc8db58774ca1df9b97415"
+    },
+    {
       "bytes": 502588,
       "path": "hfss/Velocity_Connect_n78_V2_DualPort_S150_PowerQA_B25_B1.aedt",
       "sha256": "f30607b5362d306502486486924cee84985c57449001e29e0da9307c12ae105c"
@@ -111,6 +236,11 @@
       "sha256": "403486d67df69734bab39e0e0731c089e48dd1f86324d2e1442f2e65dcbe6437"
     },
     {
+      "bytes": 530608,
+      "path": "hfss/Velocity_Connect_n78_V4_PTF_DualSlant_A45_H24_W16_B22_N4_G08_S160_E18_T1_G15_PML_B25_R12_B1.aedt",
+      "sha256": "906a5c75afb4d42a669199f7328f3d04d92c3236f0485154f804007c4598dd21"
+    },
+    {
       "bytes": 530612,
       "path": "hfss/Velocity_Connect_n78_V4_PTF_DualSlant_A45_H24_W16_B22_N4_G08_S160_E18_T1_G15_PML_B30_B1.aedt",
       "sha256": "6bc3049c4c9aa5c6c768564692d5f920f831d85923589b5418bda0d830dd19eb"
@@ -119,6 +249,16 @@
       "bytes": 15441,
       "path": "hfss/analyze_n78_matching.py",
       "sha256": "96d2547bac22ca72c27840f713691161548aedfbc48ec71358677c7cb671f0e9"
+    },
+    {
+      "bytes": 5266,
+      "path": "hfss/audit_radiator_power.py",
+      "sha256": "99da26a5f708a9403ee1b7c9cdaff7257dcab4f02618c63eb8b8a92e59096bc1"
+    },
+    {
+      "bytes": 6321,
+      "path": "hfss/audit_terminal_sources.py",
+      "sha256": "5aa0310fd0ef0df17ae4cf4b79e48b1395a3b36bd975f1b85b0682797a5836da"
     },
     {
       "bytes": 8796,
@@ -146,9 +286,19 @@
       "sha256": "80260cbb9583ca45348d9c8d8bbeeb53a3079e9cb9e9c889ad525351111660ef"
     },
     {
+      "bytes": 11893,
+      "path": "hfss/export_power_budget_revision06.py",
+      "sha256": "1089775c14c8c822280dedd14784252b15cb78e67638eb3368d76a73ad4ae5e8"
+    },
+    {
       "bytes": 5524,
       "path": "hfss/postprocess_n78_v2_fields.py",
       "sha256": "ba9db05f9d6d199d3ea695a822554caaad3aa45de43ef78daf69912c36792eea"
+    },
+    {
+      "bytes": 5231,
+      "path": "hfss/power_balance.py",
+      "sha256": "3d5ffb80efd71600f50440399f6c2df630b9258536b742a5454d635510adb530"
     },
     {
       "bytes": 10965,
@@ -181,9 +331,24 @@
       "sha256": "b5287a0536c96f06f50ea075cf95f407c4e8090699827fccab3abc9acf5106e3"
     },
     {
+      "bytes": 3450,
+      "path": "hfss/replay_power_budget_revision06.py",
+      "sha256": "88eea761bffa1f21a2dddd96e915f165240449a867bf87231004e5fcb9240c84"
+    },
+    {
       "bytes": 66,
       "path": "hfss/requirements-hfss.txt",
       "sha256": "fccdb4193d54a1a4b9b6c9ab574709750c7d5f3cf7978ee24477b1fce71e6a9e"
+    },
+    {
+      "bytes": 5877,
+      "path": "hfss/run_boundary_refinement_revision06.ps1",
+      "sha256": "8042a31ba84cc89f5ae250bee61dc3ddc9ff4171fb9253ef46507a4c2642b2a0"
+    },
+    {
+      "bytes": 5551,
+      "path": "hfss/run_power_audit_guarded.ps1",
+      "sha256": "0118226ecd18d97d9cefe3f1f685fc4c2e001025ac0e01e94eeed92fd18de4b7"
     },
     {
       "bytes": 7383,
@@ -226,24 +391,29 @@
       "sha256": "7b4f690b44a8fafd43ebf39f7adb5e3f50524ed67ce3da595a9e1d539792e48f"
     },
     {
+      "bytes": 13579,
+      "path": "hsr_em_channel.h",
+      "sha256": "1b8a677beddb9e588673d4b04d76facfd58d385e7fa3300b2adccd9ae2eb38b9"
+    },
+    {
       "bytes": 4588,
       "path": "hsr_handover.h",
       "sha256": "51673aa9a414092ca41e663df9df2e7fb14bdb1935a8b205f94b94f13815d524"
     },
     {
-      "bytes": 847,
+      "bytes": 3286,
       "path": "hsr_io.h",
-      "sha256": "e6c84606505412f48e67bd8d719bf6c72813d2d561ebb22fa68262c7f8eba765"
+      "sha256": "df23df484e68cbbf56a4a1375f1d264b4fc869eb410191c198124c15e4175aae"
     },
     {
-      "bytes": 2218,
+      "bytes": 8923,
       "path": "hsr_nr.h",
-      "sha256": "5c7dae9f70be89f50056e4d83ce0286f63fb6fefefa5d730c352bd873e6535e9"
+      "sha256": "5ebcf3513387beb61e168d45e974571252e7b9af30929e1b9ecb8a342212d9f9"
     },
     {
-      "bytes": 27151,
+      "bytes": 29940,
       "path": "hsr_runner.h",
-      "sha256": "4c27bd1706011b31e19f5dd0c9675d5e710aa541337ed65e1ef4749a3265dfcc"
+      "sha256": "3ade6e17ba9ee98cb203022f0fc1990c89b2b080e44a6c2e5ecf1d900ce2f16e"
     },
     {
       "bytes": 2248,
@@ -251,14 +421,14 @@
       "sha256": "d93d8f984c4288eb9903a6bd6aea2e4b28b96dbac194800bfad54d729fa4f722"
     },
     {
-      "bytes": 14480,
+      "bytes": 16125,
       "path": "hsr_types.h",
-      "sha256": "576945d9938c6c28555fb7a1d49d3df0baa99dae738e9da72506f9d613a2492e"
+      "sha256": "ca156b6c3c6b1727e71a484076c4c7be2c3f9f45265100613cebea3f8b6e3281"
     },
     {
-      "bytes": 7057,
+      "bytes": 8167,
       "path": "hsr_velocity_connect.cc",
-      "sha256": "ca3238cef4a7d388255af2e60135a00ac6d1a7f2c7435c176f0427631eb50a4d"
+      "sha256": "9882588297d4e654ceb4a043c83f3ffa7f3cc86de576d1a8805dd51ce4aea5d4"
     },
     {
       "bytes": 125,
@@ -361,6 +531,36 @@
       "sha256": "c809c969ec7e11b9ff37784e9c6fcc0b7c5148d168e18b05aed797e03fbd6ead"
     },
     {
+      "bytes": 7679,
+      "path": "reproducibility/REVISION06_STATUS.md",
+      "sha256": "97bf5ec297dd3c4d967673e5de76558927196f372ce5e3cf0d17efdfb9373603"
+    },
+    {
+      "bytes": 15515,
+      "path": "reproducibility/em_bridge_v1_audit.md",
+      "sha256": "11104720d8c65fdbc80138e241f343c6e4c618dea6970e820244fb35e2a9c775"
+    },
+    {
+      "bytes": 5308,
+      "path": "reproducibility/radiator_power_revision05.md",
+      "sha256": "a9a7820f2a1eed7288791314399f1cfc768b8d183da8197bf0393265b7e60941"
+    },
+    {
+      "bytes": 7720,
+      "path": "reproducibility/revision06_power_plan.md",
+      "sha256": "0ae81e7119447dab2629d8737c2602783dc57e17a2978882de9492c6ad31e5bc"
+    },
+    {
+      "bytes": 20570,
+      "path": "reproducibility/vehcom_campaign_protocol.md",
+      "sha256": "a4ba6da93cc5cda43b6642437d19f639da1358b5da311913579074f20ff9678f"
+    },
+    {
+      "bytes": 18359,
+      "path": "reproducibility/vehcom_revision06_execution.md",
+      "sha256": "cd9e509e90cf6dacc7e12fea74091b689db469917ba41da9b3f03b180b6eed6d"
+    },
+    {
       "bytes": 92,
       "path": "requirements.txt",
       "sha256": "8abd93504fa228a89f09f808ebf5c94303be8242bb73a93718037f738e2f9e04"
@@ -379,6 +579,11 @@
       "bytes": 4365,
       "path": "run_corridor_campaign.py",
       "sha256": "574bd39044a1f3f39c5f6513d303a5a2ac43cf4eb94036eb877b9bfceebe610c"
+    },
+    {
+      "bytes": 22633,
+      "path": "scripts/analyze_vehcom_validation.py",
+      "sha256": "fb29907efbcde409663423b6f9062b2081d2c54ffd56691cd3143648718546db"
     },
     {
       "bytes": 1997,
@@ -421,14 +626,29 @@
       "sha256": "383a181665a0527a237b36049ca840e6b19b48fa52281275208a448d2e9b5afc"
     },
     {
-      "bytes": 6151,
-      "path": "scripts/sync_wsl_ns3_v5.sh",
-      "sha256": "90af178bbfa88b8bea434d33bb74385a8efe1fe3b1d867165d2815e0f962dfe8"
+      "bytes": 36156,
+      "path": "scripts/run_vehcom_revision06.py",
+      "sha256": "b14c6748985b30d8d4faf9a9e7be400dff3b9a2584eea3cfb9dbcb2c1dd76228"
     },
     {
-      "bytes": 6300,
+      "bytes": 30295,
+      "path": "scripts/run_vehcom_validation.py",
+      "sha256": "71b2bcf8b87057ff6d828dcafe17978bf32c96b81f2f6e73e03cd52355397a46"
+    },
+    {
+      "bytes": 3169,
+      "path": "scripts/start_vehcom_revision06.ps1",
+      "sha256": "4718fb52804daf1e187a45359e1aaba18ad1830e61bcfbaaf71f8c8f7fc9316c"
+    },
+    {
+      "bytes": 6190,
+      "path": "scripts/sync_wsl_ns3_v5.sh",
+      "sha256": "0a4e4980efb06c18cd369762b5e0dbd3ce28b196d57dabe4352180610e1f49bc"
+    },
+    {
+      "bytes": 8838,
       "path": "scripts/verify_source_manifest.py",
-      "sha256": "0bf316b95772fa52da27c11448b113b53aab2510763d6d8476f94d5f249a0771"
+      "sha256": "34a921a5143c3a144130317bb9d3f6bd6c0b7645efe671060569d2b93b451a00"
     },
     {
       "bytes": 2448,
@@ -436,9 +656,29 @@
       "sha256": "102b5b447ecb6011c6dc324a350aac8f28a39fa6f4c8341792c80d0a7e0fe353"
     },
     {
+      "bytes": 19438,
+      "path": "tests/test_calibration_contract.py",
+      "sha256": "ffafec699549eeab2b9d885080b7613832504308eea15d70d801a5088a6778b7"
+    },
+    {
       "bytes": 5044,
       "path": "tests/test_corridor_checkpoint.py",
       "sha256": "5ba9d879201576061b5bb7255d0cf0f1006beec69a8597e2de05e49b22f18639"
+    },
+    {
+      "bytes": 7261,
+      "path": "tests/test_em_channel.cc",
+      "sha256": "c3a38079518d9ca8cd310de3ff0c1bcc982c9adef7c5035214c4039dcdd1d3f5"
+    },
+    {
+      "bytes": 9783,
+      "path": "tests/test_em_channel.py",
+      "sha256": "ceccef18912e56b904bd280f42dbf583fd8e7f9c9215b80ec6eca46427c1236c"
+    },
+    {
+      "bytes": 2260,
+      "path": "tests/test_em_channel_ns3.cc",
+      "sha256": "2853311ce6d9827e03028073c9e3f72337696508b16c3ed1a5b30083ae66bfb7"
     },
     {
       "bytes": 1572,
@@ -456,9 +696,24 @@
       "sha256": "f7dd57eee688e978b591fe67cb5b4f5b31b0e87959f899676e76cdb441af1ce2"
     },
     {
+      "bytes": 6011,
+      "path": "tests/test_power_balance.py",
+      "sha256": "09158331ebe8da45bfe85621c3f53eed910d8738a98597bb0c14861c7fa2bad4"
+    },
+    {
       "bytes": 11557,
       "path": "tests/test_prototype.py",
       "sha256": "5d58533b9256a5c4114f938803047bdc605810633b944f7e1e6645df5a46db02"
+    },
+    {
+      "bytes": 2318,
+      "path": "tests/test_radiator_power_audit.py",
+      "sha256": "20cf0ca1719c8c79f0663c28e86829172c2bf673995d01cdba230937b1b22804"
+    },
+    {
+      "bytes": 1964,
+      "path": "tests/test_repository_docs.py",
+      "sha256": "942739dfaaeb43a31d9515019939e39ba0826381bff6945314770b15c6daf8df"
     },
     {
       "bytes": 13171,
@@ -474,6 +729,16 @@
       "bytes": 929,
       "path": "tests/test_statistical_evidence.py",
       "sha256": "47c1b556dfa5ff642884f5a7231fa6b5df942f11f7b5cc0fa8f65c31c4e017eb"
+    },
+    {
+      "bytes": 21092,
+      "path": "tests/test_vehcom_revision06.py",
+      "sha256": "dd9cc29314263df3c33a8e8b73f3bf5d19c3cedcbfb04b43063dc55c3b15cd84"
+    },
+    {
+      "bytes": 18873,
+      "path": "tests/test_vehcom_validation.py",
+      "sha256": "21614bdee585cccff329855f8881e06143fd83ca701daf446259ed42b97adaa5"
     },
     {
       "bytes": 2558,

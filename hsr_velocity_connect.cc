@@ -55,6 +55,11 @@ int main(int argc, char* argv[])
 
   cmd.AddValue("seed", "RNG seed", cfg.seed);
   cmd.AddValue("run", "RNG run base", cfg.run);
+  cmd.AddValue("nrRngStream", "NR device/helper stream start; -1 preserves automatic allocation", cfg.nrRngStream);
+  cmd.AddValue("channelRngStream", "Separate ThreeGpp stream block start; -1 leaves helper/default assignment", cfg.channelRngStream);
+  cmd.AddValue("emTouchstone", "Matched 50-ohm V4/V5 cross-fixture .s4p (em_complex only)", cfg.emTouchstonePath);
+  cmd.AddValue("emOperators", "Required external absolute complex installation operator CSV", cfg.emOperatorsPath);
+  cmd.AddValue("emMapping", "cross fixture as-is or straight service-port permutation", cfg.emMapping);
 
   cmd.AddValue("distance", "Distance (m) used for speed sweep", cfg.distanceM);
   cmd.AddValue("speed", "Speed (km/h) used for distance sweep", cfg.speedKmph);
@@ -68,7 +73,7 @@ int main(int argc, char* argv[])
   cmd.AddValue("scenario", "Scenario: metal, composite, or repeater", scenarioName);
   cmd.AddValue(
     "passiveModel",
-    "Passive abstraction: component_budget or legacy_scalar",
+    "Passive abstraction: component_budget, declared_scalar, legacy_scalar, em_complex",
     passiveModelName);
   cmd.AddValue("singleRun", "Run one parameterized configuration and write single_run.csv", singleRun);
 
@@ -151,7 +156,7 @@ int main(int argc, char* argv[])
   {
     std::cerr << "Unknown passive model '" << passiveModelName
               << "'. Expected component_budget, declared_scalar, or "
-              << "legacy_scalar." << std::endl;
+              << "legacy_scalar, or em_complex." << std::endl;
     return 2;
   }
 
@@ -164,6 +169,10 @@ int main(int argc, char* argv[])
 
   try
   {
+    if (singleRun && !TryParseScenario(scenarioName,cfg.scenario))
+      throw std::invalid_argument("Unknown scenario: "+scenarioName);
+    if (cfg.passiveModel == PassiveModelType::EM_COMPLEX && !singleRun)
+      throw std::invalid_argument("em_complex requires --singleRun=1; legacy sweeps are not supported");
     ApplyGuardedCorridorWindow(cfg);
     ValidateRunConfig(cfg);
   }
@@ -183,7 +192,13 @@ int main(int argc, char* argv[])
                 << "'. Expected metal, composite, or repeater." << std::endl;
       return 2;
     }
-    RunSingle(cfg);
+    try { RunSingle(cfg); }
+    catch (const std::exception& error)
+    {
+      std::cerr << "Run failed: " << error.what() << std::endl;
+      Simulator::Destroy();
+      return 2;
+    }
   }
   else
   {
